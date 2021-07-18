@@ -1,9 +1,9 @@
 Proc.data <- function(data, algorithm = "seurat", expr.meas = "umi", n.features = 2000, seed = NULL){
 
-  library(cidr)
-  library(Rtsne)
-  library(Seurat)
-  library(SingleCellExperiment)
+  # library(cidr)
+  # library(Rtsne)
+  # library(Seurat)
+  # library(SingleCellExperiment)
 
   if(algorithm == "cidr"){
 
@@ -69,55 +69,55 @@ Proc.data <- function(data, algorithm = "seurat", expr.meas = "umi", n.features 
 }
 
 ClustR <- function(object = object, n.pcs = 10, nCluster = NULL, k.param = 20, resolution = 0.8, centers = 10, perplexity = 30){
-
-if(class(object) == "scData"){
   
-  object <- scCluster(object = object, nCluster = nCluster, nPC = n.pcs)
-  
-  comp.scores <- object@PC[, 1:n.pcs]
-  clusters <- object@clusters
-  
-}else if(class(object) == "Seurat"){
-  
-  # if(is.null(object@graphs[[paste0("RNA_snn_", k.param)]])){
-     object <- FindNeighbors(object = object, dims = 1:n.pcs, k.param = k.param, prune.SNN = 1/15)
-  #   object@graphs[[paste0("RNA_snn_", k.param)]] <- object@graphs$RNA_snn
-  # }else{
-  #   object@graphs$RNA_snn <- object@graphs[[paste0("RNA_snn_", k.param)]]
-  # }
+  if(class(object) == "scData"){
     
-  object <- FindClusters(object = object, resolution = resolution)
+    object <- scCluster(object = object, nCluster = nCluster, nPC = n.pcs)
+    
+    comp.scores <- object@PC[, 1:n.pcs]
+    clusters <- object@clusters
+    
+  }else if(class(object) == "Seurat"){
+    
+    # if(is.null(object@graphs[[paste0("RNA_snn_", k.param)]])){
+       object <- FindNeighbors(object = object, dims = 1:n.pcs, k.param = k.param, prune.SNN = 1/15)
+    #   object@graphs[[paste0("RNA_snn_", k.param)]] <- object@graphs$RNA_snn
+    # }else{
+    #   object@graphs$RNA_snn <- object@graphs[[paste0("RNA_snn_", k.param)]]
+    # }
+      
+    object <- FindClusters(object = object, resolution = resolution)
+    
+    projections <- Embeddings(object = object)[, 1:n.pcs]
+    clusters <- as.integer(Idents(object))
+    
+  }else if(class(object) == "SingleCellExperiment"){
+    
+    reducedDim(object, type = "tsne") <- Rtsne(reducedDim(object, type = "pca")[, 1:n.pcs], perplexity = perplexity, pca = FALSE)$Y
+    colData(object)$clusters <- kmeans(reducedDim(object, type = "tsne"), centers = centers)$cluster
+    
+    projections <- reducedDim(object)[, 1:n.pcs]
+    clusters <- as.integer(colData(object)$clusters)
+    
+  }
   
-  projections <- Embeddings(object = object)[, 1:n.pcs]
-  clusters <- as.integer(Idents(object))
+  ICVI <- index.S(d = dist(projections, method = "manhattan"), cl = clusters)
   
-}else if(class(object) == "SingleCellExperiment"){
+  if(!is.finite(ICVI)){
+    ICVI <- -1
+  }
   
-  reducedDim(object, type = "tsne") <- Rtsne(reducedDim(object, type = "pca")[, 1:n.pcs], perplexity = perplexity, pca = FALSE)$Y
-  colData(object)$clusters <- kmeans(reducedDim(object, type = "tsne"), centers = centers)$cluster
-  
-  projections <- reducedDim(object)[, 1:n.pcs]
-  clusters <- as.integer(colData(object)$clusters)
-  
-}
-
-ICVI <- index.S(d = dist(projections, method = "manhattan"), cl = clusters)
-
-if(!is.finite(ICVI)){
-  ICVI <- -1
-}
-
-return(value = list(Score = ICVI))
+  return(value = list(Score = ICVI))
 }
 
 AutoClustR <- function(object, file.path, method = "Bayesian", x.bounds = list(k.param = c(2, 160), resolution = c(0.0, 2.0)), n.priors = 15, n.starts = 15, n.pcs = NULL){
   
-  library(clusterSim)
-  library(lhs)
-  library(lme4)
-  library(ParBayesianOptimization)
-  library(Seurat)
-  library(stringi)
+  # library(clusterSim)
+  # library(lhs)
+  # library(lme4)
+  # library(ParBayesianOptimization)
+  # library(Seurat)
+  # library(stringi)
   
   if(is.null(n.pcs)){
     if(class(object) == "scData"){

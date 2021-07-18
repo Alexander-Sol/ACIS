@@ -1,10 +1,10 @@
 Evaluate.clustering <- function(object){
 
-  library(aricode)
-  library(cidr)
-  library(RaceID)
-  library(SC3)
-  library(Seurat)
+  # library(aricode)
+  # library(cidr)
+  # library(RaceID)
+  # library(SC3)
+  # library(Seurat)
 
   if(class(object) == "scData.wLabs"){
 

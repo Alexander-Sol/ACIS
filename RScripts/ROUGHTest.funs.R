@@ -41,11 +41,11 @@ Test.method <- function(object, method, best.IKAP = NULL){
 
 Comp.ICVI <- function(object, clusters, dim){
   
-  library(aricode)
-  library(clusterSim)
-  library(clValid)
-  library(fpc)
-  library(SingleCellExperiment)
+  # library(aricode)
+  # library(clusterSim)
+  # library(clValid)
+  # library(fpc)
+  # library(SingleCellExperiment)
   
   index.list <- c(
     ARI(c1 = colData(object)$labels, c2 = clusters),
@@ -57,7 +57,7 @@ Comp.ICVI <- function(object, clusters, dim){
     index.DB(scale(reducedDim(object, type = "pca")[, 1:dim]), cl = clusters, p = 1)$DB,
     dunn(clusters = clusters, Data = reducedDim(object, type = "pca")[, 1:dim]),
     dunn(clusters = clusters, Data = reducedDim(object, type = "pca")[, 1:dim], method = "manhattan"),
-    dunn(clusters = clusters, Data = scale(reducedDim(object, type = "pca")[, 1:dim])),
+    dunn(clusters = clusters, Data = scale(reducedDim(object, type = "pca")[, 1:dim])), #scale: set mean to 0, set SD to 1
     dunn(clusters = clusters, Data = scale(reducedDim(object, type = "pca")[, 1:dim]), method = "manhattan"),
     index.S(d = dist(reducedDim(object, type = "pca")[, 1:dim]), cl = clusters),
     index.S(d = dist(reducedDim(object, type = "pca")[, 1:dim], method = "manhattan"), cl = clusters),

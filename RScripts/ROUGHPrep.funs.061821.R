@@ -1,6 +1,6 @@
 Remove.ERCCs <- function(data){
   
-  library(SingleCellExperiment)
+  # library(SingleCellExperiment)
   
   features <- grep(pattern = "^ERCC-", rownames(data), ignore.case = TRUE, invert = TRUE)
   data <- data[features, ]
@@ -10,7 +10,7 @@ Remove.ERCCs <- function(data){
 
 Filter.cells <- function(data, outlier.thresh = 3){
   
-  library(SingleCellExperiment)
+  # library(SingleCellExperiment)
   
   n.features <- colSums(counts(data) > 0)
   mito.genes <- grep(pattern = "^MT-", rownames(data), ignore.case = TRUE)
@@ -33,12 +33,22 @@ Filter.cells <- function(data, outlier.thresh = 3){
 
 Remove.zeroes <- function(data){
   
-  library(SingleCellExperiment)
+  # library(SingleCellExperiment)
   
   n.cells <- rowSums(counts(data) > 0)
   rowData(data)$n.cells <- n.cells
   data <- data[n.cells >= 1, ]
   
   return(value = data)
+  
+}
+
+Prep.data <- function(data) {
+  
+  data <- Remove.ERCCs(data) %>%
+    Filter.cells() %>%
+    Remove.zeroes()
+  
+  return(data)
   
 }
