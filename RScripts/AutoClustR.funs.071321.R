@@ -68,7 +68,7 @@ Proc.data <- function(data, algorithm = "seurat", expr.meas = "umi", n.features 
   return(value = object)
 }
 
-ClustR <- function(object = object, n.pcs = 10, nCluster = NULL, k.param = 20, resolution = 0.8, centers = 10, perplexity = 30){
+ClustR <- function(object = object, n.pcs = 10, nCluster = NULL, k.param = 20, resolution = 0.8, centers = 10, perplexity = 30, seed = 0){
   
   if(class(object) == "scData"){
     
@@ -86,7 +86,7 @@ ClustR <- function(object = object, n.pcs = 10, nCluster = NULL, k.param = 20, r
     #   object@graphs$RNA_snn <- object@graphs[[paste0("RNA_snn_", k.param)]]
     # }
       
-    object <- FindClusters(object = object, resolution = resolution)
+    object <- FindClusters(object = object, resolution = resolution, random.seed = 534555234)
     
     projections <- Embeddings(object = object)[, 1:n.pcs]
     clusters <- as.integer(Idents(object))
@@ -107,7 +107,43 @@ ClustR <- function(object = object, n.pcs = 10, nCluster = NULL, k.param = 20, r
     ICVI <- -1
   }
   
-  return(value = list(Score = ICVI))
+  return(value = list( Score = ICVI, 
+                       ARI = Evaluate.clustering(object)
+                       )
+         )
+}
+
+Comp.ICVI <- function(object, clusters, dim){
+  
+  # library(aricode)
+  # library(clusterSim)
+  # library(clValid)
+  # library(fpc)
+  # library(SingleCellExperiment)
+  
+  if(class(object) == "Seurat"){
+    object <- as.SingleCellExperiment(object)
+  }
+  
+  index.list <- c(
+    ARI(c1 = colData(object)$labels, c2 = clusters),
+    calinhara(reducedDim(object, type = "pca")[, 1:dim], clustering = clusters),
+    calinhara(scale(reducedDim(object, type = "pca")[, 1:dim]), clustering = clusters),
+    index.DB(reducedDim(object, type = "pca")[, 1:dim], cl = clusters)$DB,
+    index.DB(reducedDim(object, type = "pca")[, 1:dim], cl = clusters, p = 1)$DB,
+    index.DB(scale(reducedDim(object, type = "pca")[, 1:dim]), cl = clusters)$DB,
+    index.DB(scale(reducedDim(object, type = "pca")[, 1:dim]), cl = clusters, p = 1)$DB,
+    dunn(clusters = clusters, Data = reducedDim(object, type = "pca")[, 1:dim]),
+    dunn(clusters = clusters, Data = reducedDim(object, type = "pca")[, 1:dim], method = "manhattan"),
+    dunn(clusters = clusters, Data = scale(reducedDim(object, type = "pca")[, 1:dim])), #scale: set mean to 0, set SD to 1
+    dunn(clusters = clusters, Data = scale(reducedDim(object, type = "pca")[, 1:dim]), method = "manhattan"),
+    index.S(d = dist(reducedDim(object, type = "pca")[, 1:dim]), cl = clusters),
+    index.S(d = dist(reducedDim(object, type = "pca")[, 1:dim], method = "manhattan"), cl = clusters),
+    index.S(d = dist(scale(reducedDim(object, type = "pca")[, 1:dim])), cl = clusters),
+    index.S(d = dist(scale(reducedDim(object, type = "pca")[, 1:dim]), method = "manhattan"), cl = clusters)
+  )
+  
+  return(index.list)
 }
 
 AutoClustR <- function(object, file.path, method = "Bayesian", x.bounds = list(k.param = c(2, 160), resolution = c(0.0, 2.0)), n.priors = 15, n.starts = 15, n.pcs = NULL){
@@ -172,4 +208,4 @@ AutoClustR <- function(object, file.path, method = "Bayesian", x.bounds = list(k
   
   return(value = list(object, method, n.pcs, x.best, x.bounds))
 }
-output <- AutoClustR(object = object, file.path = "C:/Users/15635/Documents/")
+# output <- AutoClustR(object = object, file.path = "C:/Users/15635/Documents/")

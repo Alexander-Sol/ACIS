@@ -29,4 +29,16 @@ library(stringi)
 b1 <- Baron.to.SCexp("Data/Baron-1/GSM2230757_human1_umifm_counts.csv")
 b1 <- Prep.data(b1)
 
-Proc.data(b1, algorithm = "seurat") # Gonna have to determine data format (UMI, cpm) for each
+b1 <- Proc.data(b1, algorithm = "seurat", expr.meas = "umi") 
+
+b1 <- JackStraw(b1, num.replicate = 100, dims = 35) %>%
+  ScoreJackStraw(dims = 1:35)
+npc.num <- min(which(b1@reductions$pca@jackstraw$overall.p.values[ , 2] > 0.05), na.rm = T) - 1
+if(npc.num <= 0) { npcs <- 35 }
+
+SI.Man <- ClustR(object = b1, n.pcs = npc.num)
+
+# CellFindR Pilot %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
