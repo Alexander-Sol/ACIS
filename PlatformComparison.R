@@ -77,12 +77,13 @@ for( i in 1:10 ) {
 # IKAP Pilot %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 b1 <- Baron.to.SCexp("Data/Baron-1/GSM2230757_human1_umifm_counts.csv") %>%
   Prep.data() %>%
-  Proc.data(algorithm = "IKAP", expr.meas = "umi")
+  Proc.data(algorithm = "IKAP", expr.meas = "umi") 
+
+
 
 runtime <- Sys.time()
-I.Res <- IKAP(b1, out.dir = "IKAP_Output")
+IKAP.results <- ClustR(b1, algorithm = "IKAP")
 runtime <- Sys.time() - runtime
-
 
 
 

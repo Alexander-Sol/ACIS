@@ -1,4 +1,4 @@
-Evaluate.clustering <- function(object){
+Evaluate.clustering <- function(object, algorithm = "seurat"){
 
   # library(aricode)
   # library(cidr)
@@ -23,6 +23,11 @@ Evaluate.clustering <- function(object){
     labels <- colData(object)$labels
     n.clusters <- length(levels(colData(object)[[grep(pattern = "\\clusters", colnames(colData(object)))]]))
     clusters <- colData(object)[[grep(pattern = "\\clusters", colnames(colData(object)))]]
+    
+  }else if(algorithm == "IKAP"){
+    labels <- object@meta.data$labels
+    clusters <- as.integer(object[[object$best.param[[1]]]][[1]])
+    n.clusters <- length(unique(clusters))
     
   }else if(class(object) == "Seurat"){
 

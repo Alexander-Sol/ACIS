@@ -82,7 +82,9 @@ Proc.data <- function(data, algorithm = "seurat", expr.meas = "umi", n.features 
   return(value = object)
 }
 
-ClustR <- function(object = object, n.pcs = 10, nCluster = NULL, k.param = 20, resolution = 0.8, centers = 10, perplexity = 30, seed = 0){
+ClustR <- function(object = object, algorithm = "seurat", n.pcs = 10,
+                   nCluster = NULL, k.param = 20, resolution = 0.8, centers = 10,
+                   perplexity = 30, seed = 0){
   
   if(class(object) == "scData" | class(object) == "scData.wLabs"){
     
@@ -91,7 +93,14 @@ ClustR <- function(object = object, n.pcs = 10, nCluster = NULL, k.param = 20, r
     comp.scores <- object@PC[, 1:n.pcs]
     clusters <- object@clusters
     
-  }else if(class(object) == "Seurat"){
+  } else if(algorithm == "IKAP") {
+    
+    object <- IKAP(object)
+    n.pcs <- str_extract(object$best.param[[1]], "(\\d)+") %>% as.numeric()
+    projections <- Embeddings(object = object)[ , 1:n.pcs]
+    clusters <- as.integer(object[[object$best.param[[1]]]][[1]])
+    
+  } else if(class(object) == "Seurat"){
     
     # if(is.null(object@graphs[[paste0("RNA_snn_", k.param)]])){
        object <- FindNeighbors(object = object, dims = 1:n.pcs, k.param = k.param, prune.SNN = 1/15)
@@ -105,7 +114,7 @@ ClustR <- function(object = object, n.pcs = 10, nCluster = NULL, k.param = 20, r
     projections <- Embeddings(object = object)[, 1:n.pcs]
     clusters <- as.integer(Idents(object))
     
-  }else if(class(object) == "SingleCellExperiment"){
+  } else if(class(object) == "SingleCellExperiment"){
     
     reducedDim(object, type = "tsne") <- Rtsne(reducedDim(object, type = "pca")[, 1:n.pcs], perplexity = perplexity, pca = FALSE)$Y
     colData(object)$clusters <- kmeans(reducedDim(object, type = "tsne"), centers = centers)$cluster
@@ -122,7 +131,7 @@ ClustR <- function(object = object, n.pcs = 10, nCluster = NULL, k.param = 20, r
   }
   
   return(value = list( Score = ICVI, 
-                       ARI = Evaluate.clustering(object)
+                       ARI = Evaluate.clustering(object, algorithm = "IKAP")
                        )
          )
 }
