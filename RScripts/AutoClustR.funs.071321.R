@@ -21,29 +21,43 @@ Proc.data <- function(data, algorithm = "seurat", expr.meas = "umi", n.features 
       scDissim() %>%
       scPCA(plotPC = FALSE)
 
-  }else if(algorithm == "seurat"){
+  }else if (algorithm %in% c("seurat", "IKAP") ){
 
     object <- CreateSeuratObject(counts = counts(data))
     object@meta.data$labels <- colData(data)$labels
     object@meta.data$n.features <- colData(data)$n.features
-    object@meta.data$pct.mito <- colData(data)$pct.mito
+    object@meta.data$pct.mito <- object@meta.data$percent.mito <- colData(data)$pct.mito
+    object@meta.data$nUMI <- object@meta.data$nCount_RNA
     
-    if(expr.meas == "umi"){
+    if (algorithm == "seurat") {
+      if(expr.meas == "umi"){
+        
+        object <- NormalizeData(object = object, scale.factor = 1e6) %>%
+          FindVariableFeatures() %>%
+          ScaleData(vars.to.regress = c("pct.mito", "n.features")) 
+        
+      }else if(expr.meas == "tpm" | expr.meas == "cpm"){
+        
+        object@assays$RNA <- CreateAssayObject(data = log1p(counts(data)))
+        object <- FindVariableFeatures(object = object, selection.method = "mvp") %>%
+          ScaleData(vars.to.regress = c("pct.mito", "n.features"))
+        
+      }
       
-      object <- NormalizeData(object = object, scale.factor = 1e6) %>%
-        FindVariableFeatures() %>%
-        ScaleData(vars.to.regress = c("pct.mito", "n.features")) 
+      object <- RunPCA(object = object, seed.use = seed)
       
-    }else if(expr.meas == "tpm" | expr.meas == "cpm"){
-      
-      object@assays$RNA <- CreateAssayObject(data = log1p(counts(data)))
-      object <- FindVariableFeatures(object = object, selection.method = "mvp") %>%
-        ScaleData(vars.to.regress = c("pct.mito", "n.features"))
-      
+    } else if (algorithm == "IKAP") {
+      if(expr.meas == "umi"){
+        
+        object <- NormalizeData(object = object, scale.factor = 1e6)
+        
+      }else if(expr.meas == "tpm" | expr.meas == "cpm"){
+        
+        object@assays$RNA <- CreateAssayObject(data = log1p(counts(data)))
+        
+      }
     }
     
-    object <- RunPCA(object = object, seed.use = seed)
-
   }else if(algorithm == "tsne-kmeans"){
 
     object <- data
@@ -70,7 +84,7 @@ Proc.data <- function(data, algorithm = "seurat", expr.meas = "umi", n.features 
 
 ClustR <- function(object = object, n.pcs = 10, nCluster = NULL, k.param = 20, resolution = 0.8, centers = 10, perplexity = 30, seed = 0){
   
-  if(class(object) == "scData"){
+  if(class(object) == "scData" | class(object) == "scData.wLabs"){
     
     object <- scCluster(object = object, nCluster = nCluster, nPC = n.pcs)
     
