@@ -101,21 +101,21 @@ Ranum.to.SCexp <- function(file.path){
   return(value = data)
 }
 
-Zeisel.to.SCexp <- function(mrna.file.path, mito.file.path){
+Zeisel.to.SCexp <- function(mrna.file.path = "Data/Zeisel/mRNA.txt", mito.file.path = "Data/Zeisel/Mito.txt"){
 
 # library(SingleCellExperiment)
 
   mrna.data <- read.delim(file = mrna.file.path)
   mrna.data <- mrna.data[, -2]
-  mrna.data <- mrna.data[, order(mrna.data[7, ])]
+  mrna.data <- mrna.data[, orderv(mrna.data[7, ])]
   features <- mrna.data[-(1:10), 1]
   cells <- mrna.data[7, -1]
   labels <- as.character(mrna.data[1, -1])
   mrna.data <- as.matrix(mrna.data[-(1:10), -1])
 
-  mito.data <- read.delim(file = mito.file.path)
+  mito.data <- fread(file = mito.file.path)
   mito.data <- mito.data[, -2]
-  mito.data <- mito.data[, order(mito.data[7, ])]
+  mito.data <- mito.data[, orderv(mito.data[7, ])]
   features <- append(features, mito.data[-(1:10), 1])
   mito.data <- as.matrix(mito.data[-(1:10), -1])
   

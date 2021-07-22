@@ -7,7 +7,9 @@ library(RaceID)
 library(SC3)
 library(Seurat)
 library(SingleCellExperiment)
-library(IKAP)
+source("RScripts/IKAP.R")
+library(CellTrails)
+library(scran)
 
 #General
 library(tidyverse)
@@ -20,12 +22,30 @@ library(data.table)
 library(stringr)
 library(ggplot2)
 library(RColorBrewer)
+library(wrapr)
 
 #AutoClustR Specific
 library(lhs)
 library(lme4) # Nelder_Mead
 library(ParBayesianOptimization)
 library(stringi)
+
+#Comparison Scripts
+source("RScripts/ROUGHPrep.funs.061821.R")
+source("RScripts/Clust.funs.061821.R")
+source("RScripts/Load.funs.0618.R")
+
+#Expression Key
+expr.key <- list(
+  Baron = "umi",
+  Goolam = "cpm",
+  Kolodz = "cpm",
+  Loh = "tpm",
+  Menon = "umi",
+  Pollen = "tpm",
+  Ranum = "cpm",
+  Zeisel = "umi"
+)
 
 
 # Seurat Pilot
@@ -86,6 +106,7 @@ IKAP.results <- ClustR(b1, algorithm = "IKAP")
 runtime <- Sys.time() - runtime
 
 
+# SC3 Pilot %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 

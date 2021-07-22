@@ -164,6 +164,28 @@ Run.SC3 <- function(data, expr.meas = "umi", seed = NULL){
   return(value = list(object, seed))
 }
 
+Run.CellTrails <- function(data, expr.meas = "umi", seed = NULL) {
+  
+  if(is.null(seed)){
+    seed <- round(1e6 * runif(n = 1))
+  }
+  
+  rowData(data)$feature_symbol <- rownames(data)
+  
+  if(expr.meas == "umi"){
+    logcounts(data) <- log1p(1e6 * proportions(counts(data), margin = 2))
+  }else if(expr.meas == "tpm" | expr.meas == "cpm"){
+    logcounts(data) <- log1p(counts(data))
+  }
+  
+  trajFeatureNames(data) < traj <- filterTrajFeaturesByDL(data, threshold = 10, show_plot = T)
+  se <- embedSamples(data)
+  d <- findSpectrum(se$eigenvalues, frac = 100)
+  latentSpace(data) <- se$components[ , d]
+  states(data) <- clusters <- findStates(data, min_size=0.01, min_feat=5, max_pval=1e-4, min_fc=2)
+  
+}
+
 Run.Seurat <- function(data, expr.meas = "umi", seed = NULL){
 
   library(Seurat)
