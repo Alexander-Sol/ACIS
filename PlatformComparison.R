@@ -48,65 +48,150 @@ expr.key <- list(
 )
 
 
-# Seurat Pilot
+results.table <- data.frame(matrix(data = 0, nrow = 10, ncol = 4))
+names(results.table) <- c("ARI", "n.clusters", "runtime", "seed")
+Baron.1.results <- list(
+  AutoClustR = results.table,
+  CellTrails = results.table,
+  CIDR = results.table,
+  IKAP = results.table,
+  RaceID = results.table,
+  SC3 = results.table,
+  Seurat = results.table
+)
+
+
 
 b1 <- Baron.to.SCexp("Data/Baron-1/GSM2230757_human1_umifm_counts.csv")
 b1 <- Prep.data(b1)
 
-b1 <- Proc.data(b1, algorithm = "seurat", expr.meas = "umi") 
+for(i in 1) {
+  Baron.1.results$CellTrails[ i, ] <- CellTrails.flow(data = b1, expr.meas = expr.key$Baron)
+  Baron.1.results$CIDR[ i, ] <- CIDR.flow(data = b1, expr.meas = expr.key$Baron)
+  Baron1.results$IKAP[ i, ] <- IKAP.flow(data = b1, expr.meas = expr.key$Baron)
+  Baron.1.results$RaceID[ i, ] <- CIDR.flow(data = b1, expr.meas = expr.key$Baron)
+  Baron.1.results$SC3[ i, ] <- CIDR.flow(data = b1, expr.meas = expr.key$Baron)
+  Baron1.results$Seurat[ i, ] <- Seurat.flow(data = b1, expr.meas = expr.key$Baron)
+}
 
-b1 <- JackStraw(b1, num.replicate = 100, dims = 35) %>%
-  ScoreJackStraw(dims = 1:35)
-npc.num <- min(which(b1@reductions$pca@jackstraw$overall.p.values[ , 2] > 0.05), na.rm = T) - 1
-if(npc.num <= 0) { npcs <- 35 }
+saveRDS(Baron.1.results, file = "Results/Baron1/Baron1.rds")
+for(algo in names(Baron.1.results)) {
+  write.csv(Baron.1.results[[algo]], file = paste0("Results/Baron1/Baron1_", algo, ".csv" ))
+}
 
-SI.Man <- ClustR(object = b1, n.pcs = npc.num)
+CellTrails.flow <- function(data, expr.meas) {
+  
+  start.time <- Sys.time()
+  results <- Run.CellTrails(data, expr.meas = expr.meas)
+  runtime <- Sys.time() - start.time
+  eval <- Test.method(results$object, method = "celltrails")
+  
+  return( 
+    c(
+      eval$ARI,
+      eval$n.clusters,
+      runtime,
+      results$seed
+    )
+  )
+  
+}
 
-# CellFindR Pilot %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+CIDR.flow <- function(data, expr.meas) {
+  
+  start.time <- Sys.time()
+  results <- Run.CIDR(data, expr.meas = expr.meas)
+  runtime <- Sys.time() - start.time
+  eval <- Test.method(results, method = "cidr")
+  
+  return( 
+    c(
+      eval$ARI,
+      eval$n.clusters,
+      runtime,
+      NA
+    )
+  )
+  
+}
 
-file_loc <- "CellFindR_Output/"
-proj_name <- "B1_Test"
-setwd(file_loc)
+IKAP.flow <- function(data, expr.meas) {
+  
+  start.time <- Sys.time()
+  results <- Run.IKAP(data, expr.meas = expr.meas)
+  runtime <- Sys.time() - start.time
+  eval <- Test.method(results$object, method = "ikap")
+  
+  return( 
+    c(
+      eval$ARI,
+      eval$n.clusters,
+      runtime,
+      results$seed
+    )
+  )
+  
+}
 
-res <- find_res(b1)
-b1 <- FindNeighbors(b1, dims = 1:20, k.param = 20)
-b1 <- FindClusters(b1, resolution = 0.6)
+RaceID.flow <- function(data, expr.meas) {
+  
+  start.time <- Sys.time()
+  results <- Run.RaceID(data, expr.meas = expr.meas)
+  runtime <- Sys.time() - start.time
+  eval <- Test.method(results$object, method = "raceid")
+  
+  return( 
+    c(
+      eval$ARI,
+      eval$n.clusters,
+      runtime,
+      results$seed
+    )
+  )
+  
+}
 
-b1_CFR <- sub_clustering(b1, output_folder = "CellFindR_Output/", proj_name = proj_name) #CellFindR is going to take the longest
+SC3.flow <- function(data, expr.meas) {
+  
+  start.time <- Sys.time()
+  results <- Run.SC3(data, expr.meas = expr.meas)
+  runtime <- Sys.time() - start.time
+  eval <- Test.method(results$object, method = "sc3")
+  
+  return( 
+    c(
+      eval$ARI,
+      eval$n.clusters,
+      runtime,
+      results$seed
+    )
+  )
+  
+}
 
-# CIDR Pilot %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-b1 <- Baron.to.SCexp("Data/Baron-1/GSM2230757_human1_umifm_counts.csv") %>%
-  Prep.data() %>%
-  Proc.data(algorithm = "cidr", expr.meas = "umi") 
-cidr.npcs <- calc_npc(b1@variation)
-
-results <- data.frame(matrix(data = 0, nrow = 10, ncol = 3))
-names(results) <- c("ARI", "Clusters", "Runtime")
-
-
-for( i in 1:10 ) {
-  runtime <- Sys.time()
-  cidr.res <- ClustR(object = b1, n.pcs = cidr.npcs)
-  runtime <- Sys.time() - runtime
-  results[i, 1] <- cidr.res$ARI[[2]]
-  results[i, 2] <- cidr.res$ARI[[1]]
-  results[i, 3] <- runtime
+Seurat.flow <- function(data, expr.meas) {
+  
+  start.time <- Sys.time()
+  results <- Run.Seurat(data, expr.meas = expr.meas)
+  runtime <- Sys.time() - start.time
+  eval <- Test.method(results$object, method = "seurat")
+  
+  return( 
+    c(
+      eval$ARI,
+      eval$n.clusters,
+      runtime,
+      results$seed
+    )
+  )
+  
 }
 
 
-# IKAP Pilot %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-b1 <- Baron.to.SCexp("Data/Baron-1/GSM2230757_human1_umifm_counts.csv") %>%
-  Prep.data() %>%
-  Proc.data(algorithm = "IKAP", expr.meas = "umi") 
 
 
 
-runtime <- Sys.time()
-IKAP.results <- ClustR(b1, algorithm = "IKAP")
-runtime <- Sys.time() - runtime
 
-
-# SC3 Pilot %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 

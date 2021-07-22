@@ -28,15 +28,20 @@ Test.method <- function(object, method, best.IKAP = NULL){
     clusters <- as.factor(Idents(object))
   
   }else if(method == "ikap"){
-    Idents(object) <- object[[best.IKAP]]
+    Idents(object) <- object[[object[["best.param"]][1,1]]]
     n.clusters <- length(levels(object))
-    labels <- sapply(str_split(string = names(Idents(object)), pattern = "_"), '[', 1)
+    labels <- object$labels
     clusters <- as.factor(Idents(object))
+    
+  }else if(method == "celltrails"){
+    clusters <- states(object)
+    n.clusters <- length(levels(clusters))
+    labels <- object@colData[["labels"]]
   }
   
   ari <- ARI(c1 = clusters, c2 = labels)
 
-  return(value = list(n.clusters, ari))
+  return(value = list(n.clusters = n.clusters, ARI = ari))
 }
 
 Comp.ICVI <- function(object, clusters, dim){

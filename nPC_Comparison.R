@@ -114,4 +114,24 @@ calc_npc <- function(var, N=1, cutoff_divisor=10) {
   return(NPC_DEFAULT) 
 }
 
-# Still Need 
+# Seurat Jackstraw Example
+b1 <- Proc.data(b1, algorithm = "seurat", expr.meas = "umi") 
+b1 <- JackStraw(b1, num.replicate = 100, dims = 35) %>%
+  ScoreJackStraw(dims = 1:35)
+npc.num <- min(which(b1@reductions$pca@jackstraw$overall.p.values[ , 2] > 0.05), na.rm = T) - 1
+if(npc.num <= 0) { npcs <- 35 }
+
+
+#CellTrails nPC (https://github.com/dcellwanger/CellTrails/blob/master/R/dimred-methods.R)
+.findSpectrum_def <- function(D, frac=100) {
+  cs <- cumsum(diff(D))
+  f <- ifelse(frac <= 1, length(D) * frac, frac)
+  h <- head(cs, f)
+  fit <- .linear_fit(x.in=seq_along(h), y.in=h)
+  n <- min(which(diff(which(h > fit$y)) > 1)) + 1
+  
+  ggpl <- .plotSpectrum_def(list(frac=frac, n=n, cs=cs, fit=fit))
+  print(ggpl)
+  
+  seq_len(n)
+}
