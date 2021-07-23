@@ -9,7 +9,7 @@ library(Seurat)
 library(SingleCellExperiment)
 source("RScripts/IKAP.R")
 library(CellTrails)
-library(scran)
+# library(scran)
 
 #General
 library(tidyverse)
@@ -34,6 +34,7 @@ library(stringi)
 source("RScripts/ROUGHPrep.funs.061821.R")
 source("RScripts/Clust.funs.061821.R")
 source("RScripts/Load.funs.0618.R")
+source("RScripts/RoughTest.funs.R")
 
 #Expression Key
 expr.key <- list(
@@ -50,6 +51,9 @@ expr.key <- list(
 
 results.table <- data.frame(matrix(data = 0, nrow = 10, ncol = 4))
 names(results.table) <- c("ARI", "n.clusters", "runtime", "seed")
+
+b1 <- Baron.to.SCexp("Data/Baron-1/GSM2230757_human1_umifm_counts.csv")
+b1 <- Prep.data(b1)
 Baron.1.results <- list(
   AutoClustR = results.table,
   CellTrails = results.table,
@@ -60,12 +64,7 @@ Baron.1.results <- list(
   Seurat = results.table
 )
 
-
-
-b1 <- Baron.to.SCexp("Data/Baron-1/GSM2230757_human1_umifm_counts.csv")
-b1 <- Prep.data(b1)
-
-for(i in 1) {
+for(i in 1:10) {
   Baron.1.results$CellTrails[ i, ] <- CellTrails.flow(data = b1, expr.meas = expr.key$Baron)
   Baron.1.results$CIDR[ i, ] <- CIDR.flow(data = b1, expr.meas = expr.key$Baron)
   Baron1.results$IKAP[ i, ] <- IKAP.flow(data = b1, expr.meas = expr.key$Baron)
