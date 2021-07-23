@@ -85,6 +85,8 @@ Run.CIDR <- function(data, expr.meas = "umi"){
     nPC()
 
   object <- scCluster(object = object, nPC = object@nPC)
+  
+  print("CIDR Ran")
 
   return(object)
 }
@@ -129,7 +131,7 @@ Run.IKAP <- function(data, file.path = "IKAP/", expr.meas = "umi", seed = NULL){
       )
 
   }
-
+  print("IKAP Ran")
   return(value = list(object = object, seed = seed))
 }
 
@@ -151,6 +153,7 @@ Run.RaceID <- function(data, seed = NULL){
     findoutliers()
 
   object@cluster$labels <- colData(data)$labels
+  print("RACEID Ran")
 
   return(value = list(object = object, seed = seed))
 }
@@ -180,6 +183,8 @@ Run.SC3 <- function(data, expr.meas = "umi", seed = NULL){
 
   object <- sc3_kmeans(object = object, ks = metadata(object)$sc3$k_estimation) %>%
     sc3_calc_consens()
+  
+  print("SC3 Ran")
 
   if(dim(data)[[2]] > 5000){
     object <- sc3_run_svm(object = object, ks = metadata(object)$sc3$k_estimation)

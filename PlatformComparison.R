@@ -9,7 +9,6 @@ library(Seurat)
 library(SingleCellExperiment)
 source("RScripts/IKAP.R")
 library(CellTrails)
-# library(scran)
 
 #General
 library(tidyverse)
@@ -35,6 +34,7 @@ source("RScripts/ROUGHPrep.funs.061821.R")
 source("RScripts/Clust.funs.061821.R")
 source("RScripts/Load.funs.0618.R")
 source("RScripts/RoughTest.funs.R")
+source("Workflows.R")
 
 #Expression Key
 expr.key <- list(
@@ -64,13 +64,13 @@ Baron.1.results <- list(
   Seurat = results.table
 )
 
-for(i in 1:10) {
+for(i in 1:1) {
   Baron.1.results$CellTrails[ i, ] <- CellTrails.flow(data = b1, expr.meas = expr.key$Baron)
   Baron.1.results$CIDR[ i, ] <- CIDR.flow(data = b1, expr.meas = expr.key$Baron)
-  Baron1.results$IKAP[ i, ] <- IKAP.flow(data = b1, expr.meas = expr.key$Baron)
-  Baron.1.results$RaceID[ i, ] <- CIDR.flow(data = b1, expr.meas = expr.key$Baron)
-  Baron.1.results$SC3[ i, ] <- CIDR.flow(data = b1, expr.meas = expr.key$Baron)
-  Baron1.results$Seurat[ i, ] <- Seurat.flow(data = b1, expr.meas = expr.key$Baron)
+  Baron.1.results$IKAP[ i, ] <- IKAP.flow(data = b1, expr.meas = expr.key$Baron)
+  Baron.1.results$RaceID[ i, ] <- RaceID.flow(data = b1, expr.meas = expr.key$Baron)
+  Baron.1.results$SC3[ i, ] <- SC3.flow(data = b1, expr.meas = expr.key$Baron)
+  Baron.1.results$Seurat[ i, ] <- Seurat.flow(data = b1, expr.meas = expr.key$Baron)
 }
 
 saveRDS(Baron.1.results, file = "Results/Baron1/Baron1.rds")
@@ -78,113 +78,7 @@ for(algo in names(Baron.1.results)) {
   write.csv(Baron.1.results[[algo]], file = paste0("Results/Baron1/Baron1_", algo, ".csv" ))
 }
 
-CellTrails.flow <- function(data, expr.meas) {
-  
-  start.time <- Sys.time()
-  results <- Run.CellTrails(data, expr.meas = expr.meas)
-  runtime <- Sys.time() - start.time
-  eval <- Test.method(results$object, method = "celltrails")
-  
-  return( 
-    c(
-      eval$ARI,
-      eval$n.clusters,
-      runtime,
-      results$seed
-    )
-  )
-  
-}
 
-CIDR.flow <- function(data, expr.meas) {
-  
-  start.time <- Sys.time()
-  results <- Run.CIDR(data, expr.meas = expr.meas)
-  runtime <- Sys.time() - start.time
-  eval <- Test.method(results, method = "cidr")
-  
-  return( 
-    c(
-      eval$ARI,
-      eval$n.clusters,
-      runtime,
-      NA
-    )
-  )
-  
-}
-
-IKAP.flow <- function(data, expr.meas) {
-  
-  start.time <- Sys.time()
-  results <- Run.IKAP(data, expr.meas = expr.meas)
-  runtime <- Sys.time() - start.time
-  eval <- Test.method(results$object, method = "ikap")
-  
-  return( 
-    c(
-      eval$ARI,
-      eval$n.clusters,
-      runtime,
-      results$seed
-    )
-  )
-  
-}
-
-RaceID.flow <- function(data, expr.meas) {
-  
-  start.time <- Sys.time()
-  results <- Run.RaceID(data, expr.meas = expr.meas)
-  runtime <- Sys.time() - start.time
-  eval <- Test.method(results$object, method = "raceid")
-  
-  return( 
-    c(
-      eval$ARI,
-      eval$n.clusters,
-      runtime,
-      results$seed
-    )
-  )
-  
-}
-
-SC3.flow <- function(data, expr.meas) {
-  
-  start.time <- Sys.time()
-  results <- Run.SC3(data, expr.meas = expr.meas)
-  runtime <- Sys.time() - start.time
-  eval <- Test.method(results$object, method = "sc3")
-  
-  return( 
-    c(
-      eval$ARI,
-      eval$n.clusters,
-      runtime,
-      results$seed
-    )
-  )
-  
-}
-
-Seurat.flow <- function(data, expr.meas) {
-  
-  start.time <- Sys.time()
-  results <- Run.Seurat(data, expr.meas = expr.meas)
-  runtime <- Sys.time() - start.time
-  eval <- Test.method(results$object, method = "seurat")
-  
-  return( 
-    c(
-      eval$ARI,
-      eval$n.clusters,
-      runtime,
-      results$seed
-    )
-  )
-  
-}
 
 
 
