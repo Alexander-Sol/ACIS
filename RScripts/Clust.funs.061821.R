@@ -39,11 +39,35 @@ Run.CellFindR <- function(data, file.path, expr.meas = "umi"){
   return(value = object)
 }
 
+Run.CellTrails <- function(data, expr.meas = "umi", seed = NULL) {
+  
+  if(is.null(seed)){
+    seed <- round(1e6 * runif(n = 1))
+  }
+  
+  rowData(data)$feature_symbol <- rownames(data)
+  
+  if(expr.meas == "umi"){
+    logcounts(data) <- log1p(1e6 * proportions(counts(data), margin = 2))
+  }else if(expr.meas == "tpm" | expr.meas == "cpm"){
+    logcounts(data) <- log1p(counts(data))
+  }
+  
+  trajFeatureNames(data) <- tfeat <- filterTrajFeaturesByFF(data, threshold = 1.7, show_plot = T)
+  data.sub <- data[tfeat, ]
+  se <- embedSamples(data.sub)
+  d <- findSpectrum(se$eigenvalues, frac = 100)
+  latentSpace(data) <- se$components[ , d]
+  states(data) <- clusters <- findStates(data, min_size=0.01, min_feat=5, max_pval=1e-4, min_fc=2)
+  
+  return(value = list(object = data, seed = seed))
+}
+
 Run.CIDR <- function(data, expr.meas = "umi"){
 
-  library(cidr)
-  library(SingleCellExperiment)
-  library(tidyverse)
+  # library(cidr)
+  # library(SingleCellExperiment)
+  # library(tidyverse)
 
   if(expr.meas == "umi"){
     expr.meas <- "raw"
@@ -62,14 +86,14 @@ Run.CIDR <- function(data, expr.meas = "umi"){
 
   object <- scCluster(object = object, nPC = object@nPC)
 
-  return(value = object)
+  return(object)
 }
 
-Run.IKAP <- function(data, file.path, expr.meas = "umi", seed = NULL){
+Run.IKAP <- function(data, file.path = "IKAP/", expr.meas = "umi", seed = NULL){
 
-  library(Seurat)
-  library(SingleCellExperiment)
-  library(tidyverse)
+#   library(Seurat)
+#   library(SingleCellExperiment)
+#   library(tidyverse)
 
   if(is.null(seed)){
     seed <- round(1e6 * runif(n = 1))
@@ -106,14 +130,14 @@ Run.IKAP <- function(data, file.path, expr.meas = "umi", seed = NULL){
 
   }
 
-  return(value = list(object, seed))
+  return(value = list(object = object, seed = seed))
 }
 
 Run.RaceID <- function(data, seed = NULL){
 
-  library(RaceID)
-  library(SingleCellExperiment)
-  library(tidyverse)
+  # library(RaceID)
+  # library(SingleCellExperiment)
+  # library(tidyverse)
 
   if(is.null(seed)){
     seed <- round(1e6 * runif(n = 1))
@@ -128,14 +152,14 @@ Run.RaceID <- function(data, seed = NULL){
 
   object@cluster$labels <- colData(data)$labels
 
-  return(value = list(object, seed))
+  return(value = list(object = object, seed = seed))
 }
 
 Run.SC3 <- function(data, expr.meas = "umi", seed = NULL){
 
-  library(SC3)
-  library(SingleCellExperiment)
-  library(tidyverse)
+  # library(SC3)
+  # library(SingleCellExperiment)
+  # library(tidyverse)
 
   if(is.null(seed)){
     seed <- round(1e6 * runif(n = 1))
@@ -161,14 +185,14 @@ Run.SC3 <- function(data, expr.meas = "umi", seed = NULL){
     object <- sc3_run_svm(object = object, ks = metadata(object)$sc3$k_estimation)
   }
 
-  return(value = list(object, seed))
+  return(value = list(object = object, seed = seed))
 }
 
 Run.Seurat <- function(data, expr.meas = "umi", seed = NULL){
 
-  library(Seurat)
-  library(SingleCellExperiment)
-  library(tidyverse)
+  # library(Seurat)
+  # library(SingleCellExperiment)
+  # library(tidyverse)
 
   if(is.null(seed)){
     seed <- round(1e6 * runif(n = 1))
@@ -197,5 +221,5 @@ Run.Seurat <- function(data, expr.meas = "umi", seed = NULL){
     FindNeighbors() %>%
     FindClusters(random.seed = seed)
 
-  return(value = list(object, seed))
+  return(value = list(object = object, seed = seed))
 }
