@@ -102,8 +102,10 @@ ClustR <- function(object = object,
   } else if(class(object) == "Seurat"){
     
     object <- FindNeighbors(object = object, dims = 1:n.pcs, k.param = k.param, prune.SNN = 1/15)
+    print(paste("K.Param:", k.param))
       
     object <- FindClusters(object = object, resolution = resolution, random.seed = 534555234)
+    print(paste("Resolution:", resolution))
     
     projections <- Embeddings(object = object)[, 1:n.pcs]
     clusters <- as.integer(Idents(object))
@@ -124,7 +126,7 @@ ClustR <- function(object = object,
   if(!is.finite(ICVI)){
     ICVI <- -1
   }
-  
+  print(paste("Silhouette Score:", ICVI))
   return(value = list(Score = ICVI))
 }
 
@@ -201,7 +203,8 @@ AutoClustR <- function(object,
         },
       iters.n = n.starts - 1, 
       initPoints = n.priors, 
-      bounds = x.bounds
+      bounds = x.bounds,
+      acq = "ei"
       )
     
     x.best <- getBestPars(output)
@@ -234,7 +237,6 @@ AutoClustR <- function(object,
     x.best <- x.list[[which.max(y.list)]]
         
   }
-
   
   return(value = list(object, method, n.pcs, x.best, x.bounds))
 }
@@ -244,4 +246,7 @@ AutoClustR <- function(object,
 # TODO: Add verbosity option to AutoClustR
 
 b1 <- Proc.data(b1)
-ACTest <- AutoClustR(b1, file.path = "", method = "Bayesian")
+ACTest <- AutoClustR(b1, file.path = "", method = "Bayesian", n.priors = 15, n.starts = 15)
+ac.obj <- FindNeighbors(ACTest[[1]], k.param = ACTest[[4]]$k.param, dims = 1:ACTest[[3]]) %>%
+  FindClusters(resolution = ACTest[[4]]$resolution)
+eval <- Test.method(ac.obj, method = "autoclustr")
