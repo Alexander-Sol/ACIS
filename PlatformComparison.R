@@ -64,13 +64,13 @@ Baron.1.results <- list(
   Seurat = results.table
 )
 
-for(i in 1:1) {
-  Baron.1.results$CellTrails[ i, ] <- CellTrails.flow(data = b1, expr.meas = expr.key$Baron)
-  Baron.1.results$CIDR[ i, ] <- CIDR.flow(data = b1, expr.meas = expr.key$Baron)
+for(i in 1:10) {
+  # Baron.1.results$CellTrails[ i, ] <- CellTrails.flow(data = b1, expr.meas = expr.key$Baron)
+  # Baron.1.results$CIDR[ i, ] <- CIDR.flow(data = b1, expr.meas = expr.key$Baron)
   Baron.1.results$IKAP[ i, ] <- IKAP.flow(data = b1, expr.meas = expr.key$Baron)
   Baron.1.results$RaceID[ i, ] <- RaceID.flow(data = b1, expr.meas = expr.key$Baron)
   Baron.1.results$SC3[ i, ] <- SC3.flow(data = b1, expr.meas = expr.key$Baron)
-  Baron.1.results$Seurat[ i, ] <- Seurat.flow(data = b1, expr.meas = expr.key$Baron)
+  # Baron.1.results$Seurat[ i, ] <- Seurat.flow(data = b1, expr.meas = expr.key$Baron)
 }
 
 saveRDS(Baron.1.results, file = "Results/Baron1/Baron1.rds")

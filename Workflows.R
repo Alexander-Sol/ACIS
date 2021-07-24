@@ -41,7 +41,8 @@ CIDR.flow <- function(data, expr.meas) {
 IKAP.flow <- function(data, expr.meas) {
   
   start.time <- Sys.time()
-  results <- Run.IKAP(data, expr.meas = expr.meas)
+  results <- Run.IKAP(data, expr.meas = expr.meas,
+                      seed = Sys.time() %>% as.numeric() * runif(1))
   runtime <- Sys.time() - start.time
   units(runtime) <- "mins"
   eval <- Test.method(results$object, method = "ikap")
@@ -60,7 +61,8 @@ IKAP.flow <- function(data, expr.meas) {
 RaceID.flow <- function(data, expr.meas) {
   
   start.time <- Sys.time()
-  results <- Run.RaceID(data)
+  results <- Run.RaceID(data,
+                        seed = Sys.time() %>% as.numeric() * runif(1))
   runtime <- Sys.time() - start.time
   units(runtime) <- "mins"
   eval <- Test.method(results$object, method = "raceid")
@@ -79,7 +81,8 @@ RaceID.flow <- function(data, expr.meas) {
 SC3.flow <- function(data, expr.meas) {
   
   start.time <- Sys.time()
-  results <- Run.SC3(data, expr.meas = expr.meas)
+  results <- Run.SC3(data, expr.meas = expr.meas,
+                     seed = Sys.time() %>% as.numeric() * runif(1))
   runtime <- Sys.time() - start.time
   units(runtime) <- "mins"
   eval <- Test.method(results$object, method = "sc3")
@@ -98,7 +101,8 @@ SC3.flow <- function(data, expr.meas) {
 Seurat.flow <- function(data, expr.meas) {
   
   start.time <- Sys.time()
-  results <- Run.Seurat(data, expr.meas = expr.meas)
+  results <- Run.Seurat(data, expr.meas = expr.meas,
+                        seed = Sys.time() %>% as.numeric() * runif(1))
   runtime <- Sys.time() - start.time
   units(runtime) <- "mins"
   eval <- Test.method(results$object, method = "seurat")

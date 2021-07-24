@@ -151,7 +151,7 @@ ComputeMarkers <- function(sobj, gap.gain, candidates, out.dir){
     clustering.label <- paste0("PC",candidates$pc[i],"K",candidates$k[i])
     Idents(sobj) <- sobj@meta.data[[clustering.label]]
     sobj <- RunUMAP(sobj, dims = 1:candidates$pc[i], verbose = FALSE)
-    ggsave(DimPlot(sobj, reduction = "umap"), filename = paste0(out.dir,"/",clustering.label,"_UMAP.pdf"))
+    # ggsave(DimPlot(sobj, reduction = "umap"), filename = paste0(out.dir,"/",clustering.label,"_UMAP.pdf"))
     
     sobj.markers <- FindAllMarkers(object= sobj, only.pos = TRUE, min.pct = 0.25, thresh.use = 0.25)
     
@@ -162,15 +162,15 @@ ComputeMarkers <- function(sobj, gap.gain, candidates, out.dir){
     }
     
     top.10 <- sobj.markers %>% group_by(cluster) %>% top_n(10, avg_log2FC)
-    ggsave(DoHeatmap(object = sobj, features = top.10$gene) + NoLegend(),
-           filename = paste0(out.dir,"/",clustering.label,"_DE_genes_LCF.png"), units = "in", width = 12, height = 8)
+    # ggsave(DoHeatmap(object = sobj, features = top.10$gene) + NoLegend(),
+           # filename = paste0(out.dir,"/",clustering.label,"_DE_genes_LCF.png"), units = "in", width = 12, height = 8)
     
     out.xls[[clustering.label]] <- sobj.markers[,c("gene","p_val","avg_log2FC","pct.1","pct.2","p_val_adj","cluster","AUROC")]
     markers.all[[clustering.label]] <- sobj.markers
   }
   
   # WriteXLS(out.xls, ExcelFileName = paste0(out.dir,"/data.xls"))
-  saveRDS(markers.all, file = paste0(out.dir,"/markers.all.rds"))
+  # saveRDS(markers.all, file = paste0(out.dir,"/markers.all.rds"))
   
   return(markers.all)
 }
@@ -268,7 +268,7 @@ IKAP <- function(sobj, pcs = NA, pc.range = 20, k.max = NA, r.kmax.est = 1.5, ou
                  find.var.features = TRUE,
                  confounders = c('percent.mt','nFeature_RNA'), plot.decision.tree = FALSE, random.seed = 0){
   
-  dir.create(out.dir, recursive = T)
+  # dir.create(out.dir, recursive = T)
   
   if(DefaultAssay(sobj) == "SCT" || (DefaultAssay(sobj) == "integrated" && sobj@commands$FindIntegrationAnchors$normalization.method == "SCT")){
     cat("SCT or SCT-integrated data is used. Skip data scaling.\n")
