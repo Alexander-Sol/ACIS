@@ -83,7 +83,7 @@ Proc.data <- function(data, algorithm = "seurat", expr.meas = "umi", n.features 
 }
 
 ClustR <- function(object = object, algorithm = "seurat", n.pcs = 10,
-                   nCluster = NULL, k.param = 20, resolution = 0.8, centers = 10,
+                   nCluster = NULL, k.param = NULL, res = NULL, centers = 10,
                    perplexity = 30, seed = 0){
   
   if(class(object) == "scData" | class(object) == "scData.wLabs"){
@@ -92,13 +92,6 @@ ClustR <- function(object = object, algorithm = "seurat", n.pcs = 10,
     
     comp.scores <- object@PC[, 1:n.pcs]
     clusters <- object@clusters
-    
-  } else if(algorithm == "IKAP") {
-    
-    object <- IKAP(object)
-    n.pcs <- str_extract(object$best.param[[1]], "(\\d)+") %>% as.numeric()
-    projections <- Embeddings(object = object)[ , 1:n.pcs]
-    clusters <- as.integer(object[[object$best.param[[1]]]][[1]])
     
   } else if(class(object) == "Seurat"){
     
@@ -109,7 +102,7 @@ ClustR <- function(object = object, algorithm = "seurat", n.pcs = 10,
     #   object@graphs$RNA_snn <- object@graphs[[paste0("RNA_snn_", k.param)]]
     # }
       
-    object <- FindClusters(object = object, resolution = resolution, random.seed = 534555234)
+    object <- FindClusters(object = object, resolution = res, random.seed = 534555234)
     
     projections <- Embeddings(object = object)[, 1:n.pcs]
     clusters <- as.integer(Idents(object))
@@ -130,10 +123,7 @@ ClustR <- function(object = object, algorithm = "seurat", n.pcs = 10,
     ICVI <- -1
   }
   
-  return(value = list( Score = ICVI, 
-                       ARI = Evaluate.clustering(object, algorithm = "IKAP")
-                       )
-         )
+  return(value = list(Score = ICVI))
 }
 
 Comp.ICVI <- function(object, clusters, dim){
@@ -169,7 +159,14 @@ Comp.ICVI <- function(object, clusters, dim){
   return(index.list)
 }
 
-AutoClustR <- function(object, file.path, method = "Bayesian", x.bounds = list(k.param = c(2, 160), resolution = c(0.0, 2.0)), n.priors = 15, n.starts = 15, n.pcs = NULL){
+AutoClustR <- function(object,
+                       file.path,
+                       method = "Bayesian",
+                       x.bounds = list(k.param = c(2L, 160L),
+                                       res = c(0.0, 2.0)),
+                       n.priors = 15,
+                       n.starts = 15,
+                       n.pcs = NULL){
   
   # library(clusterSim)
   # library(lhs)
@@ -186,16 +183,24 @@ AutoClustR <- function(object, file.path, method = "Bayesian", x.bounds = list(k
     }else if(class(object) == "SingleCellExperiment"){
       roots <- metadata(object)$roots
     }
-    n.pcs <- Select.nPC(roots, file.path = file.path)
+    n.pcs <- Select.nPC(roots, file.path = file.path, do.plot = F)
   }
   
   n.pcs <- n.pcs[[2]]
 
   if(method == "Bayesian"){
-    output <- bayesOpt(do.call(function(){ClustR(object = object, n.pcs = n.pcs, ...)}, list(k.param = k.param, resolution = resolution)),
+    env <- new.env()
+    assign("object", object, envir = env)
+    assign("n.pcs", n.pcs, envir = env)
+    
+    output <- ParBayesianOptimization::bayesOpt(
+      FUN = function(...){ 
+        ClustR(object = object, n.pcs = n.pcs, ...)
+        },
       iters.n = n.starts - 1, 
       initPoints = n.priors, 
-      bounds = x.bounds)
+      bounds = x.bounds
+      )
     
     x.best <- getBestPars(output)
     

@@ -50,7 +50,7 @@ nPC.vote <- function(x, pcs.use = min(100, max(x[, 1])), ignore.single.counts = 
 
 Select.nPC <- function(x, file.path, max.pcs = min(100, length(x)), pcs.use = max.pcs, ignore.PC1 = TRUE, ignore.single.counts = TRUE, do.plot = TRUE){
 
-  library(ggplot2)
+  # library(ggplot2)
 
   npc.candidates <- nPC.nom(x, max.pcs = max.pcs, ignore.PC1 = ignore.PC1)
 
