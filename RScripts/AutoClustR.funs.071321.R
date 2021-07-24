@@ -82,9 +82,15 @@ Proc.data <- function(data, algorithm = "seurat", expr.meas = "umi", n.features 
   return(value = object)
 }
 
-ClustR <- function(object = object, algorithm = "seurat", n.pcs = 10,
-                   nCluster = NULL, k.param = NULL, res = NULL, centers = 10,
-                   perplexity = 30, seed = 0){
+ClustR <- function(object = object,
+                   algorithm = "seurat",
+                   n.pcs = 10,
+                   nCluster = NULL,
+                   k.param = NULL,
+                   resolution= NULL,
+                   centers = 10,
+                   perplexity = 30,
+                   seed = 0){
   
   if(class(object) == "scData" | class(object) == "scData.wLabs"){
     
@@ -95,14 +101,9 @@ ClustR <- function(object = object, algorithm = "seurat", n.pcs = 10,
     
   } else if(class(object) == "Seurat"){
     
-    # if(is.null(object@graphs[[paste0("RNA_snn_", k.param)]])){
-       object <- FindNeighbors(object = object, dims = 1:n.pcs, k.param = k.param, prune.SNN = 1/15)
-    #   object@graphs[[paste0("RNA_snn_", k.param)]] <- object@graphs$RNA_snn
-    # }else{
-    #   object@graphs$RNA_snn <- object@graphs[[paste0("RNA_snn_", k.param)]]
-    # }
+    object <- FindNeighbors(object = object, dims = 1:n.pcs, k.param = k.param, prune.SNN = 1/15)
       
-    object <- FindClusters(object = object, resolution = res, random.seed = 534555234)
+    object <- FindClusters(object = object, resolution = resolution, random.seed = 534555234)
     
     projections <- Embeddings(object = object)[, 1:n.pcs]
     clusters <- as.integer(Idents(object))
@@ -117,6 +118,7 @@ ClustR <- function(object = object, algorithm = "seurat", n.pcs = 10,
     
   }
   
+  # TODO: User should be able to select from whichever ICVI they choose
   ICVI <- index.S(d = dist(projections, method = "manhattan"), cl = clusters)
   
   if(!is.finite(ICVI)){
@@ -163,7 +165,7 @@ AutoClustR <- function(object,
                        file.path,
                        method = "Bayesian",
                        x.bounds = list(k.param = c(2L, 160L),
-                                       res = c(0.0, 2.0)),
+                                       resolution= c(0.0, 2.0)),
                        n.priors = 15,
                        n.starts = 15,
                        n.pcs = NULL){
@@ -174,6 +176,9 @@ AutoClustR <- function(object,
   # library(ParBayesianOptimization)
   # library(Seurat)
   # library(stringi)
+  
+  # TODO: Going to have to add some checks to make sure input (i.e., x.bounds)
+  #       is properly formatted. This is probably the most delicate part
   
   if(is.null(n.pcs)){
     if(class(object) == "scData"){
@@ -189,9 +194,6 @@ AutoClustR <- function(object,
   n.pcs <- n.pcs[[2]]
 
   if(method == "Bayesian"){
-    env <- new.env()
-    assign("object", object, envir = env)
-    assign("n.pcs", n.pcs, envir = env)
     
     output <- ParBayesianOptimization::bayesOpt(
       FUN = function(...){ 
@@ -237,3 +239,9 @@ AutoClustR <- function(object,
   return(value = list(object, method, n.pcs, x.best, x.bounds))
 }
 # output <- AutoClustR(object = object, file.path = "C:/Users/15635/Documents/")
+
+#Should be sourcing stuff here, but
+# TODO: Add verbosity option to AutoClustR
+
+b1 <- Proc.data(b1)
+ACTest <- AutoClustR(b1, file.path = "", method = "Bayesian")
