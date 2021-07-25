@@ -48,13 +48,11 @@ expr.key <- list(
   Zeisel = "umi"
 )
 
-
+# Generate results template -----
 results.table <- data.frame(matrix(data = 0, nrow = 10, ncol = 4))
 names(results.table) <- c("ARI", "n.clusters", "runtime", "seed")
 
-b1 <- Baron.to.SCexp("Data/Baron-1/GSM2230757_human1_umifm_counts.csv")
-b1 <- Prep.data(b1)
-Baron.1.results <- list(
+res.template <- list(
   AutoClustR = results.table,
   CellTrails = results.table,
   CIDR = results.table,
@@ -64,21 +62,44 @@ Baron.1.results <- list(
   Seurat = results.table
 )
 
+# Baron 1 ----
+b1 <- Baron.to.SCexp("Data/Baron-1/GSM2230757_human1_umifm_counts.csv")
+b1 <- Prep.data(b1)
+Baron.1.results <- res.template
 for(i in 1:10) {
-  # Baron.1.results$CellTrails[ i, ] <- CellTrails.flow(data = b1, expr.meas = expr.key$Baron)
-  # Baron.1.results$CIDR[ i, ] <- CIDR.flow(data = b1, expr.meas = expr.key$Baron)
+  Baron.1.results$CellTrails[ i, ] <- CellTrails.flow(data = b1, expr.meas = expr.key$Baron)
+  Baron.1.results$CIDR[ i, ] <- CIDR.flow(data = b1, expr.meas = expr.key$Baron)
   Baron.1.results$IKAP[ i, ] <- IKAP.flow(data = b1, expr.meas = expr.key$Baron)
   Baron.1.results$RaceID[ i, ] <- RaceID.flow(data = b1, expr.meas = expr.key$Baron)
   Baron.1.results$SC3[ i, ] <- SC3.flow(data = b1, expr.meas = expr.key$Baron)
-  # Baron.1.results$Seurat[ i, ] <- Seurat.flow(data = b1, expr.meas = expr.key$Baron)
+  Baron.1.results$Seurat[ i, ] <- Seurat.flow(data = b1, expr.meas = expr.key$Baron)
 }
-
 saveRDS(Baron.1.results, file = "Results/Baron1/Baron1.rds")
 for(algo in names(Baron.1.results)) {
   write.csv(Baron.1.results[[algo]], file = paste0("Results/Baron1/Baron1_", algo, ".csv" ))
 }
 
+# Goolam ----
+goolam <- Goolam.to.SCexp("Data/Goolam/Goolam_et_al_2015_count_table.tsv")
+Goolam.results <- res.template
+seeds <- runif(40)
+for(i in 1:10) {
+  Goolam.results$CellTrails[ i, ] <- CellTrails.flow(data = goolam, expr.meas = expr.key$goolam)
+  Goolam.results$CIDR[ i, ] <- CIDR.flow(data = goolam, expr.meas = expr.key$goolam)
+  Goolam.results$IKAP[ i, ] <- IKAP.flow(data = goolam, expr.meas = expr.key$goolam,
+                                         seed = (Sys.time() %>% as.numeric()) * seeds[i])
+  Goolam.results$RaceID[ i, ] <- RaceID.flow(data = goolam, expr.meas = expr.key$goolam,
+                                             seed = (Sys.time() %>% as.numeric()) * seeds[i+10])
+  Goolam.results$SC3[ i, ] <- SC3.flow(data = goolam, expr.meas = expr.key$goolam,
+                                       seed = (Sys.time() %>% as.numeric()) * seeds[i+20])
+  Goolam.results$Seurat[ i, ] <- Seurat.flow(data = goolam, expr.meas = expr.key$goolam,
+                                             seed = (Sys.time() %>% as.numeric()) * seeds[i+30])
+}
 
+saveRDS(Goolam.results, file = "Results/Goolam/Goolam.rds")
+for(algo in names(Goolam.results)) {
+  write.csv(Goolam.results[[algo]], file = paste0("Results/Goolam/Goolam_", algo, ".csv" ))
+}
 
 
 

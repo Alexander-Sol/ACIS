@@ -169,7 +169,7 @@ Run.SC3 <- function(data, expr.meas = "umi", seed = NULL){
   }
 
   rowData(data)$feature_symbol <- rownames(data)
-  
+
   if(expr.meas == "umi"){
     logcounts(data) <- log1p(1e6 * proportions(counts(data), margin = 2))
   }else if(expr.meas == "tpm" | expr.meas == "cpm"){
@@ -183,14 +183,15 @@ Run.SC3 <- function(data, expr.meas = "umi", seed = NULL){
 
   object <- sc3_kmeans(object = object, ks = metadata(object)$sc3$k_estimation) %>%
     sc3_calc_consens()
-  
+
   print("SC3 Ran")
 
   if(dim(data)[[2]] > 5000){
     object <- sc3_run_svm(object = object, ks = metadata(object)$sc3$k_estimation)
   }
 
-  return(value = list(object = object, seed = seed))
+  return(value = list(object = object,
+                      seed = seed))
 }
 
 Run.Seurat <- function(data, expr.meas = "umi", seed = NULL){
