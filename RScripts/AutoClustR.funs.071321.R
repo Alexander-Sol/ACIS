@@ -23,7 +23,7 @@ Proc.data <- function(data, algorithm = "seurat", expr.meas = "umi", n.features 
 
   }else if (algorithm %in% c("seurat", "IKAP") ){
 
-    object <- CreateSeuratObject(counts = counts(data))
+    object <- CreateSeuratObject(counts = SingleCellExperiment::counts(data))
     object@meta.data$labels <- colData(data)$labels
     object@meta.data$n.features <- colData(data)$n.features
     object@meta.data$pct.mito <- object@meta.data$percent.mito <- colData(data)$pct.mito
@@ -170,6 +170,7 @@ AutoClustR <- function(object,
                                        resolution= c(0.0, 2.0)),
                        n.priors = 15,
                        n.starts = 15,
+                       max.iterations = 50,
                        n.pcs = NULL){
   
   # library(clusterSim)
@@ -224,11 +225,19 @@ AutoClustR <- function(object,
     x.list <- list()
     
     for(i in 1:n.starts){
+    
       
       output <- Nelder_Mead(
         fn = function(x){
-          eval(parse(text = paste0("do.call(ClustR, list(object = object, n.pcs = n.pcs, ", stri_join(names(x.bounds), stri_join("x[[", 1:length(x.bounds), "]]"), sep='=', collapse=','), "))")))},
-        par = x0[i, ], lower = x.mins, upper = x.maxes)
+          x <- as.list(x)
+          names(x) <- names(x.bounds)
+          do.call(function(...){ClustR(object = object, n.pcs = n.pcs, ...)}, x)
+          },
+        par = x0[i, ],
+        lower = x.mins,
+        upper = x.maxes,
+        control = list(maxfun = max.iterations) #Set max number of function calls
+        )
 
       y.list[[i]] <- output$fval
       x.list[[i]] <- output$par
@@ -242,11 +251,14 @@ AutoClustR <- function(object,
 }
 # output <- AutoClustR(object = object, file.path = "C:/Users/15635/Documents/")
 
+source("RScripts/nPC.funs.R")
+
 #Should be sourcing stuff here, but
 # TODO: Add verbosity option to AutoClustR
-
+b1 <- Baron.to.SCexp("Data/Baron-1/GSM2230757_human1_umifm_counts.csv")
+b1 <- Prep.data(b1)
 b1 <- Proc.data(b1)
-ACTest <- AutoClustR(b1, file.path = "", method = "Bayesian", n.priors = 15, n.starts = 15)
+ACTest <- AutoClustR(b1, file.path = "", method = "Nelder-Mead", n.priors = 3, n.starts = 3)
 ac.obj <- FindNeighbors(ACTest[[1]], k.param = ACTest[[4]]$k.param, dims = 1:ACTest[[3]]) %>%
   FindClusters(resolution = ACTest[[4]]$resolution)
 eval <- Test.method(ac.obj, method = "autoclustr")
