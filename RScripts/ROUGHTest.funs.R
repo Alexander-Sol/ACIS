@@ -5,7 +5,7 @@ library(SC3)
 library(Seurat)
 library(tidyverse)
 
-Test.method <- function(object, method, best.IKAP = NULL){
+Test.method <- function(object, method, best.IKAP = NULL, expr.meas = "umi"){
   
   if(method == "cidr"){
     n.clusters <- object@nCluster
@@ -18,9 +18,11 @@ Test.method <- function(object, method, best.IKAP = NULL){
     clusters <- as.factor(object@cpart)
     
   }else if(method == "sc3"){
-    n.clusters <- max(as.integer(object@colData[, 4]))
+    cluster.column <- 4
+    # if (expr.meas != "umi") {cluster.column <- 2}
+    n.clusters <- max(as.integer(object@colData[ , cluster.column]))
     labels <- object@colData[["labels"]]
-    clusters <- as.factor(object@colData[, 4])
+    clusters <- as.factor(object@colData[ , cluster.column])
     
   }else if(method == "autoclustr" | method == "cellfindr" | method == "seurat"){
     n.clusters <- length(levels(object))

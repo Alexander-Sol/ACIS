@@ -30,9 +30,9 @@ library(ParBayesianOptimization)
 library(stringi)
 
 #Comparison Scripts
+source("RScripts/Load.funs.0618.R")
 source("RScripts/ROUGHPrep.funs.061821.R")
 source("RScripts/Clust.funs.061821.R")
-source("RScripts/Load.funs.0618.R")
 source("RScripts/RoughTest.funs.R")
 source("RScripts/Workflows.R")
 
@@ -66,13 +66,18 @@ res.template <- list(
 b1 <- Baron.to.SCexp("Data/Baron-1/GSM2230757_human1_umifm_counts.csv")
 b1 <- Prep.data(b1)
 Baron.1.results <- res.template
+seeds <- runif(40)
 for(i in 1:10) {
   Baron.1.results$CellTrails[ i, ] <- CellTrails.flow(data = b1, expr.meas = expr.key$Baron)
   Baron.1.results$CIDR[ i, ] <- CIDR.flow(data = b1, expr.meas = expr.key$Baron)
-  Baron.1.results$IKAP[ i, ] <- IKAP.flow(data = b1, expr.meas = expr.key$Baron)
-  Baron.1.results$RaceID[ i, ] <- RaceID.flow(data = b1, expr.meas = expr.key$Baron)
-  Baron.1.results$SC3[ i, ] <- SC3.flow(data = b1, expr.meas = expr.key$Baron)
-  Baron.1.results$Seurat[ i, ] <- Seurat.flow(data = b1, expr.meas = expr.key$Baron)
+  Baron.1.results$IKAP[ i, ] <- IKAP.flow(data = b1, expr.meas = expr.key$Baron,
+                                          seed = (Sys.time() %>% as.numeric()) * seeds[i])
+  Baron.1.results$RaceID[ i, ] <- RaceID.flow(data = b1, expr.meas = expr.key$Baron,
+                                              seed = (Sys.time() %>% as.numeric()) * seeds[i+10])
+  Baron.1.results$SC3[ i, ] <- SC3.flow(data = b1, expr.meas = expr.key$Baron,
+                                        seed = (Sys.time() %>% as.numeric()) * seeds[i+20])
+  Baron.1.results$Seurat[ i, ] <- Seurat.flow(data = b1, expr.meas = expr.key$Baron,
+                                              seed = (Sys.time() %>% as.numeric()) * seeds[i+30])
 }
 saveRDS(Baron.1.results, file = "Results/Baron1/Baron1.rds")
 for(algo in names(Baron.1.results)) {
@@ -81,18 +86,19 @@ for(algo in names(Baron.1.results)) {
 
 # Goolam ----
 goolam <- Goolam.to.SCexp("Data/Goolam/Goolam_et_al_2015_count_table.tsv")
+goolam <- Prep.data(goolam)
 Goolam.results <- res.template
 seeds <- runif(40)
 for(i in 1:10) {
-  Goolam.results$CellTrails[ i, ] <- CellTrails.flow(data = goolam, expr.meas = expr.key$goolam)
-  Goolam.results$CIDR[ i, ] <- CIDR.flow(data = goolam, expr.meas = expr.key$goolam)
-  Goolam.results$IKAP[ i, ] <- IKAP.flow(data = goolam, expr.meas = expr.key$goolam,
+  Goolam.results$CellTrails[ i, ] <- CellTrails.flow(data = goolam, expr.meas = expr.key$Goolam)
+  Goolam.results$CIDR[ i, ] <- CIDR.flow(data = goolam, expr.meas = expr.key$Goolam)
+  Goolam.results$IKAP[ i, ] <- IKAP.flow(data = goolam, expr.meas = expr.key$Goolam,
                                          seed = (Sys.time() %>% as.numeric()) * seeds[i])
-  Goolam.results$RaceID[ i, ] <- RaceID.flow(data = goolam, expr.meas = expr.key$goolam,
+  Goolam.results$RaceID[ i, ] <- RaceID.flow(data = goolam, expr.meas = expr.key$Goolam,
                                              seed = (Sys.time() %>% as.numeric()) * seeds[i+10])
-  Goolam.results$SC3[ i, ] <- SC3.flow(data = goolam, expr.meas = expr.key$goolam,
+  Goolam.results$SC3[ i, ] <- SC3.flow(data = goolam, expr.meas = expr.key$Goolam,
                                        seed = (Sys.time() %>% as.numeric()) * seeds[i+20])
-  Goolam.results$Seurat[ i, ] <- Seurat.flow(data = goolam, expr.meas = expr.key$goolam,
+  Goolam.results$Seurat[ i, ] <- Seurat.flow(data = goolam, expr.meas = expr.key$Goolam,
                                              seed = (Sys.time() %>% as.numeric()) * seeds[i+30])
 }
 
@@ -101,11 +107,117 @@ for(algo in names(Goolam.results)) {
   write.csv(Goolam.results[[algo]], file = paste0("Results/Goolam/Goolam_", algo, ".csv" ))
 }
 
+# Kolodz ----
+Kolodz <- Kolodz.to.SCexp("Data/Kolodz/counttable_es.csv") %>%
+  Prep.data()
+Kolodz.results <- res.template
+seeds <- runif(40)
+for(i in 1:10) {
+  Kolodz.results$CellTrails[ i, ] <- CellTrails.flow(data = Kolodz, expr.meas = expr.key$Kolodz)
+  Kolodz.results$CIDR[ i, ] <- CIDR.flow(data = Kolodz, expr.meas = expr.key$Kolodz)
+  Kolodz.results$IKAP[ i, ] <- IKAP.flow(data = Kolodz, expr.meas = expr.key$Kolodz,
+                                         seed = (Sys.time() %>% as.numeric()) * seeds[i])
+  Kolodz.results$RaceID[ i, ] <- RaceID.flow(data = Kolodz, expr.meas = expr.key$Kolodz,
+                                             seed = (Sys.time() %>% as.numeric()) * seeds[i+10])
+  Kolodz.results$SC3[ i, ] <- SC3.flow(data = Kolodz, expr.meas = expr.key$Kolodz,
+                                       seed = (Sys.time() %>% as.numeric()) * seeds[i+20])
+  Kolodz.results$Seurat[ i, ] <- Seurat.flow(data = Kolodz, expr.meas = expr.key$Kolodz,
+                                             seed = (Sys.time() %>% as.numeric()) * seeds[i+30])
+}
+saveRDS(Kolodz.results, file = "Results/Kolodz/Kolodz.rds")
+for(algo in names(Kolodz.results)) {
+  write.csv(Kolodz.results[[algo]], file = paste0("Results/Kolodz/Kolodz_", algo, ".csv" ))
+}
+rm(Kolodz)
 
+# Baron 2 ----
+b2 <- Baron.to.SCexp("Data/Baron-2/GSM2230758_human2_umifm_counts.csv") %>%
+  Prep.data()
+Baron.2.results <- res.template
+seeds <- runif(40)
+for(i in 1:10) {
+  Baron.2.results$CellTrails[ i, ] <- CellTrails.flow(data = b2, expr.meas = expr.key$Baron)
+  Baron.2.results$CIDR[ i, ] <- CIDR.flow(data = b2, expr.meas = expr.key$Baron)
+  Baron.2.results$IKAP[ i, ] <- IKAP.flow(data = b2, expr.meas = expr.key$Baron,
+                                          seed = (Sys.time() %>% as.numeric()) * seeds[i])
+  Baron.2.results$RaceID[ i, ] <- RaceID.flow(data = b2, expr.meas = expr.key$Baron,
+                                              seed = (Sys.time() %>% as.numeric()) * seeds[i+10])
+  Baron.2.results$SC3[ i, ] <- SC3.flow(data = b2, expr.meas = expr.key$Baron,
+                                        seed = (Sys.time() %>% as.numeric()) * seeds[i+20])
+  Baron.2.results$Seurat[ i, ] <- Seurat.flow(data = b2, expr.meas = expr.key$Baron,
+                                              seed = (Sys.time() %>% as.numeric()) * seeds[i+30])
+}
+saveRDS(Baron.2.results, file = "Results/Baron2/Baron2.rds")
+for(algo in names(Baron.2.results)) {
+  write.csv(Baron.2.results[[algo]], file = paste0("Results/Baron2/Baron2_", algo, ".csv" ))
+}
+rm(b2)
 
+# Loh ----
+Loh <- Loh.to.SCexp("Data/Loh/GSM2257302_All_samples_sc_tpm.txt") %>%
+  Prep.data()
+Loh.results <- res.template
+seeds <- runif(40)
+for(i in 1:10) {
+  Loh.results$CellTrails[ i, ] <- CellTrails.flow(data = Loh, expr.meas = expr.key$Loh)
+  Loh.results$CIDR[ i, ] <- CIDR.flow(data = Loh, expr.meas = expr.key$Loh)
+  Loh.results$IKAP[ i, ] <- IKAP.flow(data = Loh, expr.meas = expr.key$Loh,
+                                         seed = (Sys.time() %>% as.numeric()) * seeds[i])
+  Loh.results$RaceID[ i, ] <- RaceID.flow(data = Loh, expr.meas = expr.key$Loh,
+                                             seed = (Sys.time() %>% as.numeric()) * seeds[i+10])
+  Loh.results$SC3[ i, ] <- SC3.flow(data = Loh, expr.meas = expr.key$Loh,
+                                       seed = (Sys.time() %>% as.numeric()) * seeds[i+20])
+  Loh.results$Seurat[ i, ] <- Seurat.flow(data = Loh, expr.meas = expr.key$Loh,
+                                             seed = (Sys.time() %>% as.numeric()) * seeds[i+30])
+}
+saveRDS(Loh.results, file = "Results/Loh/Loh.rds")
+for(algo in names(Loh.results)) {
+  write.csv(Loh.results[[algo]], file = paste0("Results/Loh/Loh_", algo, ".csv" ))
+}
+rm(Loh)
 
+# Pollen ----
+Pollen <- Pollen.to.SCexp("Data/Pollen/NBT_hiseq_linear_tpm_values.txt") %>%
+  Prep.data()
+Pollen.results <- res.template
+seeds <- runif(40)
+for(i in 1:10) {
+  Pollen.results$CellTrails[ i, ] <- CellTrails.flow(data = Pollen, expr.meas = expr.key$Pollen)
+  Pollen.results$CIDR[ i, ] <- CIDR.flow(data = Pollen, expr.meas = expr.key$Pollen)
+  Pollen.results$IKAP[ i, ] <- IKAP.flow(data = Pollen, expr.meas = expr.key$Pollen,
+                                      seed = (Sys.time() %>% as.numeric()) * seeds[i])
+  Pollen.results$RaceID[ i, ] <- RaceID.flow(data = Pollen, expr.meas = expr.key$Pollen,
+                                          seed = (Sys.time() %>% as.numeric()) * seeds[i+10])
+  Pollen.results$SC3[ i, ] <- SC3.flow(data = Pollen, expr.meas = expr.key$Pollen,
+                                    seed = (Sys.time() %>% as.numeric()) * seeds[i+20])
+  Pollen.results$Seurat[ i, ] <- Seurat.flow(data = Pollen, expr.meas = expr.key$Pollen,
+                                          seed = (Sys.time() %>% as.numeric()) * seeds[i+30])
+}
+saveRDS(Pollen.results, file = "Results/Pollen/Pollen.rds")
+for(algo in names(Pollen.results)) {
+  write.csv(Pollen.results[[algo]], file = paste0("Results/Pollen/Pollen_", algo, ".csv" ))
+}
+rm(Pollen)
 
-
-
-
-
+# Ranum ----
+Ranum <- Ranum.to.SCexp("Data/Ranum/GSE114157_p15_Expression_Matrix.csv") %>%
+  Prep.data()
+Ranum.results <- res.template
+seeds <- runif(40)
+for(i in 1:10) {
+  Ranum.results$CellTrails[ i, ] <- CellTrails.flow(data = Ranum, expr.meas = expr.key$Ranum)
+  Ranum.results$CIDR[ i, ] <- CIDR.flow(data = Ranum, expr.meas = expr.key$Ranum)
+  Ranum.results$IKAP[ i, ] <- IKAP.flow(data = Ranum, expr.meas = expr.key$Ranum,
+                                         seed = (Sys.time() %>% as.numeric()) * seeds[i])
+  Ranum.results$RaceID[ i, ] <- RaceID.flow(data = Ranum, expr.meas = expr.key$Ranum,
+                                             seed = (Sys.time() %>% as.numeric()) * seeds[i+10])
+  Ranum.results$SC3[ i, ] <- SC3.flow(data = Ranum, expr.meas = expr.key$Ranum,
+                                       seed = (Sys.time() %>% as.numeric()) * seeds[i+20])
+  Ranum.results$Seurat[ i, ] <- Seurat.flow(data = Ranum, expr.meas = expr.key$Ranum,
+                                             seed = (Sys.time() %>% as.numeric()) * seeds[i+30])
+}
+saveRDS(Ranum.results, file = "Results/Ranum/Ranum.rds")
+for(algo in names(Ranum.results)) {
+  write.csv(Ranum.results[[algo]], file = paste0("Results/Ranum/Ranum_", algo, ".csv" ))
+}
+rm(Ranum)
