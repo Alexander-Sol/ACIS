@@ -51,10 +51,15 @@ Run.CellTrails <- function(data, expr.meas = "umi") {
     logcounts(data) <- log1p(1e6 * proportions(counts(data), margin = 2))
   }else if(expr.meas == "tpm" | expr.meas == "cpm"){
     logcounts(data) <- log1p(counts(data))
+  }else if(expr.meas == "mnn"){
+    logcounts(data) <- assay(data, "corrected")
   }
   
   trajFeatureNames(data) <- tfeat <- filterTrajFeaturesByFF(data, threshold = 1.7, show_plot = T)
   data.sub <- data[tfeat, ]
+  # Manual check and subset for zero count cells after filtering
+  data <- data[ , colSums(data.sub@assays@data$counts) != 0]
+  data.sub <- data.sub[ , colSums(data.sub@assays@data$counts) != 0]
   se <- embedSamples(data.sub)
   d <- findSpectrum(se$eigenvalues, frac = 100)
   latentSpace(data) <- se$components[ , d]
