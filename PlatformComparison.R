@@ -43,6 +43,7 @@ expr.key <- list(
   Kolodz = "cpm",
   Loh = "tpm",
   Menon = "umi",
+  MenonCorrected = "mnn",
   Pollen = "tpm",
   Ranum = "cpm",
   Zeisel = "umi"
@@ -195,6 +196,39 @@ for(i in 1) {
                                        seed = (Sys.time() %>% as.numeric()) * seeds[i+20])
   MenonPR.results$Seurat[ i, ] <- Seurat.flow(data = MenonPR, expr.meas = expr.key$Menon,
                                              seed = (Sys.time() %>% as.numeric()) * seeds[i+30])
+  saveRDS(MenonPR.results, file = "Results/MenonPR/MenonPR.rds")
+}
+saveRDS(MenonPR.results, file = "Results/MenonPR/MenonPR.rds")
+for(algo in names(MenonPR.results)) {
+  write.csv(MenonPR.results[[algo]], file = paste0("Results/MenonPR/MenonPR_", algo, ".csv" ))
+}
+rm(MenonPR)
+
+# Menon PR Corrected ----
+
+if(file.exists("Data/Menon-P/mnnCorrected.rds")) {
+  MenonPR <- readRDS("Data/Menon-P/mnnCorrected.rds")
+} else {
+  MenonPR <- Menon.to.SCexp(data.file.path = "Data/Menon-P/GSE137537_counts.mtx",
+                            feat.file.path = "Data/Menon-P/GSE137537_gene_names.txt",
+                            cell.file.path = "Data/Menon-P/GSE137537_sample_annotations.tsv",
+                            sample = c("PR", "PR2", "PR3")) %>%
+    Prep.data()
+}
+
+MenonPR.results <- res.template
+seeds <- runif(40)
+for(i in 1) {
+  MenonPR.results$CellTrails[ i, ] <- CellTrails.flow(data = MenonPR, expr.meas = expr.key$MenonCorrected)
+  MenonPR.results$CIDR[ i, ] <- CIDR.flow(data = MenonPR, expr.meas = expr.key$MenonCorrected)
+  MenonPR.results$IKAP[ i, ] <- IKAP.flow(data = MenonPR, expr.meas = expr.key$MenonCorrected,
+                                         seed = (Sys.time() %>% as.numeric()) * seeds[i])
+  MenonPR.results$RaceID[ i, ] <- RaceID.flow(data = MenonPR, expr.meas = expr.key$MenonCorrected,
+                                             seed = (Sys.time() %>% as.numeric()) * seeds[i+10])
+  MenonPR.results$SC3[ i, ] <- SC3.flow(data = MenonPR, expr.meas = expr.key$MenonCorrected,
+                                        seed = (Sys.time() %>% as.numeric()) * seeds[i+20])
+  MenonPR.results$Seurat[ i, ] <- Seurat.flow(data = MenonPR, expr.meas = expr.key$MenonCorrected,
+                                              seed = (Sys.time() %>% as.numeric()) * seeds[i+30])
   saveRDS(MenonPR.results, file = "Results/MenonPR/MenonPR.rds")
 }
 saveRDS(MenonPR.results, file = "Results/MenonPR/MenonPR.rds")

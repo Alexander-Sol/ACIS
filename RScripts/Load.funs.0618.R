@@ -70,6 +70,17 @@ Menon.to.SCexp <- function(data.file.path, feat.file.path, cell.file.path, sampl
     logcounts(data[[set]]) <- log1p(1e6 * proportions(counts(data[[set]]), margin = 2))
   }
   data <- mnnCorrect(unlist(data))
+  
+  unnormed.data <- assay(data, "corrected") %>% expm1() %>% '/'(1e6) 
+  counts(data) <- apply(unnormed.data[1:1000, 1:10],
+                        MARGIN = 2,
+                        FUN = function(x) { 
+                          if( sum(x>0) ) {
+                            x / min( x[ x>0 ] ) 
+                          } else {
+                            x / 1
+                          }  
+                        }) #This reverses 'proportions', probably
 
   return(value = data)
 }

@@ -74,7 +74,19 @@ Run.CIDR <- function(data, expr.meas = "umi"){
   # library(SingleCellExperiment)
   # library(tidyverse)
 
-  if(expr.meas == "umi"){
+  if(expr.meas == "umi") {
+    expr.meas <- "raw"
+  } else if(expr.meas == "mnn") {
+    unnormed.data <- assay(data, "corrected") %>% expm1() %>% '/'(1e6) 
+    counts(data) <- apply(unnormed.data[1:1000, 1:10],
+                          MARGIN = 2,
+                          FUN = function(x) { 
+                            if( sum(x>0) ) {
+                              x / min( x[ x>0 ] ) 
+                            } else {
+                              x / 1
+                            }  
+                          }) #This reverses 'proportions', probably
     expr.meas <- "raw"
   }
 

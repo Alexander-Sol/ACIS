@@ -11,7 +11,6 @@ mrp.df <- data.frame(Algorithm = mrp.algo,
                      ARI = mpr.ari,
                      `Log Runtime` = mrp.logRT)
 plot.df <- mrp.df[-1*(1:5), ] 
-plot.df <- plot.df[-1*((0:5)*5+1), ]
+# plot.df <- plot.df[-1*((0:5)*5+1), ]
 
-plot <- ggplot(data = plot.df, aes(x = Log.Runtime, y = ARI, color = Algorithm)) + geom_point() + scale_color_binned()
-
+plot <- ggplot(data = plot.df, aes(x = Log.Runtime, y = ARI, color = Algorithm)) + geom_point()
