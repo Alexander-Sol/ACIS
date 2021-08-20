@@ -22,6 +22,7 @@ library(stringr)
 library(ggplot2)
 library(RColorBrewer)
 library(wrapr)
+library(batchelor)
 
 #AutoClustR Specific
 library(lhs)
@@ -209,25 +210,25 @@ rm(MenonPR)
 if(file.exists("Data/Menon-P/mnnCorrected.rds")) {
   MenonPR <- readRDS("Data/Menon-P/mnnCorrected.rds")
 } else {
-  MenonPR <- Menon.to.SCexp(data.file.path = "Data/Menon-P/GSE137537_counts.mtx",
-                            feat.file.path = "Data/Menon-P/GSE137537_gene_names.txt",
-                            cell.file.path = "Data/Menon-P/GSE137537_sample_annotations.tsv",
-                            sample = c("PR", "PR2", "PR3")) %>%
-    Prep.data()
+  MenonPR <- Menon.to.SCexp.mnn(data.file.path = "Data/Menon-P/GSE137537_counts.mtx",
+                                feat.file.path = "Data/Menon-P/GSE137537_gene_names.txt",
+                                cell.file.path = "Data/Menon-P/GSE137537_sample_annotations.tsv",
+                                sample = c("PR", "PR2", "PR3"))
+  saveRDS(MenonPR, "Data/Menon-P/mnnCorrected.rds")
 }
 
 MenonPR.results <- res.template
 seeds <- runif(40)
-for(i in 1) {
-  MenonPR.results$CellTrails[ i, ] <- CellTrails.flow(data = MenonPR, expr.meas = expr.key$MenonCorrected)
-  MenonPR.results$CIDR[ i, ] <- CIDR.flow(data = MenonPR, expr.meas = expr.key$MenonCorrected)
-  MenonPR.results$IKAP[ i, ] <- IKAP.flow(data = MenonPR, expr.meas = expr.key$MenonCorrected,
+for(i in 1:3) {
+  MenonPR.results$CellTrails[ i, ] <- CellTrails.flow(data = MenonPR, expr.meas = expr.key$Menon)
+  MenonPR.results$CIDR[ i, ] <- CIDR.flow(data = MenonPR, expr.meas = expr.key$Menon)
+  MenonPR.results$IKAP[ i, ] <- IKAP.flow(data = MenonPR, expr.meas = expr.key$Menon,
                                          seed = (Sys.time() %>% as.numeric()) * seeds[i])
-  MenonPR.results$RaceID[ i, ] <- RaceID.flow(data = MenonPR, expr.meas = expr.key$MenonCorrected,
+  MenonPR.results$RaceID[ i, ] <- RaceID.flow(data = MenonPR, expr.meas = expr.key$Menon,
                                              seed = (Sys.time() %>% as.numeric()) * seeds[i+10])
-  MenonPR.results$SC3[ i, ] <- SC3.flow(data = MenonPR, expr.meas = expr.key$MenonCorrected,
+  MenonPR.results$SC3[ i, ] <- SC3.flow(data = MenonPR, expr.meas = expr.key$Menon,
                                         seed = (Sys.time() %>% as.numeric()) * seeds[i+20])
-  MenonPR.results$Seurat[ i, ] <- Seurat.flow(data = MenonPR, expr.meas = expr.key$MenonCorrected,
+  MenonPR.results$Seurat[ i, ] <- Seurat.flow(data = MenonPR, expr.meas = expr.key$Menon,
                                               seed = (Sys.time() %>% as.numeric()) * seeds[i+30])
   saveRDS(MenonPR.results, file = "Results/MenonPR/MenonPR.rds")
 }

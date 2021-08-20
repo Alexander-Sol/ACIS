@@ -53,9 +53,25 @@ Loh.to.SCexp <- function(file.path){
 }
 
 Menon.to.SCexp <- function(data.file.path, feat.file.path, cell.file.path, sample = c("MR", "PR", "MR2", "PR2", "MR3", "PR3")){
+  
+  # library(Matrix)
+  # library(SingleCellExperiment)
+  
+  data <- readMM(file = data.file.path)
+  features <- read.delim(file = feat.file.path, header = FALSE)
+  cells <- read.delim(file = cell.file.path)
+  dimnames(data) <- list(features[, 1], cells[, 1])
+  data <- as.matrix(data[, cells[, 2] == sample])
+  labels <- cells[cells[, 2] == sample, 49]
+  data <- SingleCellExperiment(assays = list(counts = data), colData = list(labels = labels))
+  
+  return(value = data)
+}
 
-# library(Matrix)
-# library(SingleCellExperiment)
+Menon.to.SCexp.mnn <- function(data.file.path,
+                               feat.file.path,
+                               cell.file.path,
+                               sample = c("MR", "PR", "MR2", "PR2", "MR3", "PR3")){
 
   whole.data <- readMM(file = data.file.path)
   features <- read.delim(file = feat.file.path, header = FALSE)
@@ -67,21 +83,13 @@ Menon.to.SCexp <- function(data.file.path, feat.file.path, cell.file.path, sampl
     labels <- cells[cells[, 2] == set, 49]
     data[[set]] <- SingleCellExperiment(assays = list(counts = data[[set]]), colData = list(labels = labels))
     data[[set]] <- Remove.ERCCs(data[[set]]) %>% Filter.cells()
-    logcounts(data[[set]]) <- log1p(1e6 * proportions(counts(data[[set]]), margin = 2))
+    logcounts(data[[set]]) <- log1p(counts(data[[set]]))
   }
-  data <- mnnCorrect(unlist(data))
+  data <- mnnCorrect(unlist(data),
+                     cos.norm.out = FALSE)
+  counts(data) <- assay(data, "corrected") %>% expm1()
+  data <- Remove.zeroes(data) # This must be done after correction/merging, otherwise genes won't match across samples
   
-  unnormed.data <- assay(data, "corrected") %>% expm1() %>% '/'(1e6) 
-  counts(data) <- apply(unnormed.data[1:1000, 1:10],
-                        MARGIN = 2,
-                        FUN = function(x) { 
-                          if( sum(x>0) ) {
-                            x / min( x[ x>0 ] ) 
-                          } else {
-                            x / 1
-                          }  
-                        }) #This reverses 'proportions', probably
-
   return(value = data)
 }
 
