@@ -87,7 +87,7 @@ Menon.to.SCexp.mnn <- function(data.file.path,
   }
   data <- mnnCorrect(unlist(data),
                      cos.norm.out = FALSE)
-  counts(data) <- assay(data, "corrected") %>% expm1()
+  counts(data) <- assay(data, "corrected") %>% exp()
   data <- Remove.zeroes(data) # This must be done after correction/merging, otherwise genes won't match across samples
   
   return(value = data)
