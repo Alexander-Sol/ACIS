@@ -89,6 +89,7 @@ Menon.to.SCexp.mnn <- function(data.file.path,
                      cos.norm.out = FALSE)
   counts(data) <- assay(data, "corrected") %>% exp()
   data <- Remove.zeroes(data) # This must be done after correction/merging, otherwise genes won't match across samples
+  data$labels <- labels <- cells[(cells$tissue %in% sample) & (cells$Barcode %in% colnames(data)) , 49]
   
   return(value = data)
 }

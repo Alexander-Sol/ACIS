@@ -150,6 +150,9 @@ Run.SC3 <- function(data, expr.meas = "umi", seed = NULL){
     logcounts(data) <- log1p(1e6 * proportions(counts(data), margin = 2))
   }else if(expr.meas == "tpm" | expr.meas == "cpm"){
     logcounts(data) <- log1p(counts(data))
+  } else if(expr.meas == "mnn") {
+    counts(data)[counts(data) == 1] <- 0
+    logcounts(data) <- log1p(1e6 * proportions(counts(data), margin = 2))
   }
 
   object <- sc3_prepare(object = data, rand_seed = seed) %>%
