@@ -186,13 +186,13 @@ MenonPR <- Menon.to.SCexp(data.file.path = "Data/Menon-P/GSE137537_counts.mtx",
   Prep.data()
 MenonPR.results <- res.template
 seeds <- runif(40)
-for(i in 1) {
+for(i in 1:3) {
   MenonPR.results$CellTrails[ i, ] <- CellTrails.flow(data = MenonPR, expr.meas = expr.key$Menon)
-  # MenonPR.results$CIDR[ i, ] <- CIDR.flow(data = MenonPR, expr.meas = expr.key$Menon)
-  # MenonPR.results$IKAP[ i, ] <- IKAP.flow(data = MenonPR, expr.meas = expr.key$Menon,
-  #                                        seed = (Sys.time() %>% as.numeric()) * seeds[i])
-  # MenonPR.results$RaceID[ i, ] <- RaceID.flow(data = MenonPR, expr.meas = expr.key$Menon,
-  #                                            seed = (Sys.time() %>% as.numeric()) * seeds[i+10])
+  MenonPR.results$CIDR[ i, ] <- CIDR.flow(data = MenonPR, expr.meas = expr.key$Menon)
+  MenonPR.results$IKAP[ i, ] <- IKAP.flow(data = MenonPR, expr.meas = expr.key$Menon,
+                                         seed = (Sys.time() %>% as.numeric()) * seeds[i])
+  MenonPR.results$RaceID[ i, ] <- RaceID.flow(data = MenonPR, expr.meas = expr.key$Menon,
+                                             seed = (Sys.time() %>% as.numeric()) * seeds[i+10])
   MenonPR.results$SC3[ i, ] <- SC3.flow(data = MenonPR, expr.meas = expr.key$Menon,
                                        seed = (Sys.time() %>% as.numeric()) * seeds[i+20])
   MenonPR.results$Seurat[ i, ] <- Seurat.flow(data = MenonPR, expr.meas = expr.key$Menon,
@@ -205,7 +205,34 @@ for(algo in names(MenonPR.results)) {
 }
 rm(MenonPR)
 
+# Menon MR Combined ---- 
+MenonMR <- Menon.to.SCexp(data.file.path = "Data/Menon-P/GSE137537_counts.mtx",
+                          feat.file.path = "Data/Menon-P/GSE137537_gene_names.txt",
+                          cell.file.path = "Data/Menon-P/GSE137537_sample_annotations.tsv",
+                          sample = c("MR", "MR2", "MR3")) %>%
+  Prep.data()
+MenonMR.results <- res.template
+seeds <- runif(40)
+for(i in 1:3) {
+  MenonMR.results$CellTrails[ i, ] <- CellTrails.flow(data = MenonMR, expr.meas = expr.key$Menon)
+  MenonMR.results$CIDR[ i, ] <- CIDR.flow(data = MenonMR, expr.meas = expr.key$Menon)
+  MenonMR.results$IKAP[ i, ] <- IKAP.flow(data = MenonMR, expr.meas = expr.key$Menon,
+                                          seed = (Sys.time() %>% as.numeric()) * seeds[i])
+  MenonMR.results$RaceID[ i, ] <- RaceID.flow(data = MenonMR, expr.meas = expr.key$Menon,
+                                              seed = (Sys.time() %>% as.numeric()) * seeds[i+10])
+  MenonMR.results$SC3[ i, ] <- SC3.flow(data = MenonMR, expr.meas = expr.key$Menon,
+                                        seed = (Sys.time() %>% as.numeric()) * seeds[i+20])
+  MenonMR.results$Seurat[ i, ] <- Seurat.flow(data = MenonMR, expr.meas = expr.key$Menon,
+                                              seed = (Sys.time() %>% as.numeric()) * seeds[i+30])
+  saveRDS(MenonMR.results, file = "Results/MenonMR/MenonMR.rds")
+}
+saveRDS(MenonMR.results, file = "Results/MenonMR/MenonMR.rds")
+for(algo in names(MenonMR.results)) {
+  write.csv(MenonMR.results[[algo]], file = paste0("Results/MenonMR/MenonMR_", algo, ".csv" ))
+}
+rm(MenonMR)
 # Menon PR Corrected ----
+
 
 if(file.exists("Data/Menon-P/mnnCorrected.rds")) {
   MenonPR <- readRDS("Data/Menon-P/mnnCorrected.rds")

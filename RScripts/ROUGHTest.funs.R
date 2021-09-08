@@ -18,11 +18,10 @@ Test.method <- function(object, method, best.IKAP = NULL, expr.meas = "umi"){
     clusters <- as.factor(object@cpart)
     
   }else if(method == "sc3"){
-    # cluster.column <- 4
-    # if (expr.meas != "umi") {cluster.column <- 2}
-    # n.clusters <- max(as.integer(object@colData[ , cluster.column]))
+    cluster.column <- grep("sc3*", names(object@colData), value = T)
+    n.clusters <- max(as.integer(object@colData@listData[[cluster.column]]))
     labels <- object@colData[["labels"]]
-    clusters <- as.factor(object@colData[ , cluster.column])
+    clusters <- as.factor(object@colData@listData[[cluster.column]])
     
   }else if(method == "autoclustr" | method == "cellfindr" | method == "seurat"){
     n.clusters <- length(levels(object))

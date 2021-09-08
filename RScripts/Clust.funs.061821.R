@@ -151,8 +151,9 @@ Run.SC3 <- function(data, expr.meas = "umi", seed = NULL){
   }else if(expr.meas == "tpm" | expr.meas == "cpm"){
     logcounts(data) <- log1p(counts(data))
   } else if(expr.meas == "mnn") {
-    counts(data)[counts(data) == 1] <- 0
-    logcounts(data) <- log1p(1e6 * proportions(counts(data), margin = 2))
+    counts(data)[counts(data) == 1] <- 0 # Converting from corrected to counts should be done via expm1, but because 
+                                        # corrected contains 0 < values < 1, subtracting one causes errors down the line
+    logcounts(data) <- assay(data, "corrected")
   }
 
   object <- sc3_prepare(object = data, rand_seed = seed) %>%

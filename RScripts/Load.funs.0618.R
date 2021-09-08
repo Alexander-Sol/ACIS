@@ -61,13 +61,14 @@ Menon.to.SCexp <- function(data.file.path, feat.file.path, cell.file.path, sampl
   features <- read.delim(file = feat.file.path, header = FALSE)
   cells <- read.delim(file = cell.file.path)
   dimnames(data) <- list(features[, 1], cells[, 1])
-  data <- as.matrix(data[, cells[, 2] == sample])
-  labels <- cells[cells[, 2] == sample, 49]
+  data <- as.matrix(data[, cells[, 2] %in% sample])
+  labels <- cells[cells[, 2] %in% sample, 49]
   data <- SingleCellExperiment(assays = list(counts = data), colData = list(labels = labels))
   
   return(value = data)
 }
 
+#As of right now, this doesn't work. Algorithms will cluster it, but terribly. I'm not sure whats going on with it.
 Menon.to.SCexp.mnn <- function(data.file.path,
                                feat.file.path,
                                cell.file.path,
@@ -92,7 +93,7 @@ Menon.to.SCexp.mnn <- function(data.file.path,
   data$labels <- labels <- cells[(cells$tissue %in% sample) & (cells$Barcode %in% colnames(data)) , 49]
   
   return(value = data)
-}
+} 
 
 Pollen.to.SCexp <- function(file.path){
 
