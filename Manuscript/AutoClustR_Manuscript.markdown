@@ -87,22 +87,89 @@ body of research that addresses this problem, it's not uncommon for new
 scRNA-seq analysis platforms to implement new methods of principal
 component retention without considering or comparing existing methods.
 
-After the dimensionality of the data has been reduced and the
-dimensionality determined, clustering the data becomes computationally
-feasible. Like principal component retention, the field of unsupervised
-clustering is well researched, and many different techniques have been
-developed to group n-dimensional data into clusters. A number of generic
-clustering algorithms have been applied to scRNA-seq data (e.g. k-means
-and -medoids clustering \[7, 8\], density-based clustering \[9\],
-graph-based clustering \[10\], and hierarchical clustering \[11\]), and
-many more have been developed specifically for single-cell clustering
-(e.g. CIDR \[12\], BackSPIN \[13\], DIMM-SC \[14\], and BAMM-SC \[15\]).
-While these clustering algorithms differ substantially in their
-approach, all require some direct (e.g., k in k-means clustering) or
-indirect (e.g., resolution in Louvain community detection) estimate of
-the cluster number. Many algorithms require additional parameters (e.g.,
-n in n-nearest neighbors) that influence cluster solutions in more
-subtle ways. The impact that these parameters have on the results of the
-analysis are often poorly understood, and as such, the increased
-performance that hyper-parameter optimization could afford goes
-unrealized.
+After the dimensionality of the data has been reduced to the space
+defined by the retained principal components, clustering the data
+becomes computationally feasible. Like principal component retention,
+the field of unsupervised clustering is well researched, and many
+different techniques have been developed to group n-dimensional data
+into clusters. A number of generic clustering algorithms have been
+applied to scRNA-seq data (e.g. k-means and -medoids clustering \[7,
+8\], density-based clustering \[9\], graph-based clustering \[10\], and
+hierarchical clustering \[11\]), and many more have been developed
+specifically for single-cell clustering (e.g. CIDR \[12\], BackSPIN
+\[13\], DIMM-SC \[14\], and BAMM-SC \[15\]). While these clustering
+algorithms differ substantially in their approach, all require some
+direct (e.g., k in k-means clustering) or indirect (e.g., resolution in
+Louvain community detection) estimate of the cluster number. Many
+algorithms require additional parameters (e.g., n in n-nearest
+neighbors) that influence cluster solutions in more subtle ways. The
+impact that these parameters have on the results of the analysis are
+often poorly understood, and as such, the increased performance that
+hyper-parameter optimization could afford goes unrealized.
+
+In order to optimize these parameters and enhance the performance of
+clustering algorithms, it's necessary to have some objective measure of
+quality of cluster solutions. Fortunately, many different clustering
+validation indices have been developed for just such a purpose. These
+clustering indices can be divided into two main types, external
+clustering validation indices (ECVIs) and internal clustering validation
+indices (ICVIs). External clustering validation indices work by
+comparing the cluster assignments of data points to a pre-existing
+classification of the data. While ECVIs are useful for benchmarking the
+performance of clustering algorithms on known, well-characterized
+datasets, they're not applicable when clustering novel datasets. In the
+case of novel datasets, ICVIs provide a useful metric on which to rate
+cluster-solution quality.
+
+There are many different ICVIs, all of which differ in the fine details
+of their implementation. They share several commonalities. ICVIs work by
+considering the position of datapoints within a n-dimensional space.
+These indices reward clustering solutions where different clusters are
+compact and well separated, i.e., where within-cluster variance is
+minimized, and between-cluster variance is maximized. Common ICVIs
+include the Calinski-Harabasz index (CHI), the Silhouette Index (SI),
+the Dunn Index (DI), and the Davies-Bouldin index (DB).
+
+Given a set of parameters to be optimized and an objective function that
+rates the performance of a set of parameters, it is necessary to devise
+a rational strategy by which to approach optimization. Bayesian
+optimization is one such method. Bayesian optimization is an approach to
+object function optimization that is well suited to noisy functions that
+are costly or time-consuming to evaluate. While the performance of
+Bayesian optimization decreases as the complexity of the optimization
+increases, it generally performs well when optimizing fewer than 20
+parameters. Bayesian optimization is a commonly used when the function
+to be optimized is non-differentiable. All of these traits make Bayesian
+optimization ideally/uniquely suited to the optimization of clustering
+algorithms. Briefly, Bayesian optimization works as follows: The
+objective function is sampled at *n* randomly chosen, evenly spaced
+points falling on the parameter space to be searched. Then, a gaussian
+process is fit over the n selected points. (A gaussian process is a
+multivariate normal distribution, where each of the n observations is
+modelled as a separate gaussian, or normal, distribution). Then, using
+this gaussian process, a new point in the domain of the parameter space
+is sampled in an attempt to maximize the object function. After each
+point is sampled, the gaussian process is updated, and the process
+repeats until no further improvement is possible, or a set number of
+iterations is reached. When using Bayesian optimization in the context
+of cluster-solution optimization, an ICVI would represent the objective
+function, and the k for k-means and n in n-neighbors represent two
+possible parameters to be optimized.
+
+We contend that potential gains in the analysis of scRNA-seq data have
+been left unrealized for want of a well-defined framework in which to
+optimize these analysis. There exists an unmet need for a rigorously
+benchmarked computational tool to automate the selection of parameters
+in single-cell clustering. To address this need, we have developed
+AutoClustR, a computational tool for automated and unbiased single-cell
+clustering, through rigorous and systematic comparison of principal
+component retention methods and internal cluster validation indices.
+AutoClustR is built on top of Seurat, allowing users to combine Bayesian
+optimization and well-established clustering workflow, enabling the
+determination of optimal clustering solutions. We demonstrate that
+AutoClustR either matches or exceeds the performance of SC3, RaceID3,
+default Seurat, CIDR, IKAP, and CellFindR across 20 published and
+synthetic scRNA-seq datasets. Finally, we demonstrate AutoClustR's
+utility by evaluating a novel, real-world dataset -- scRNA-seq of inner
+ear organoids -- to reveal a heretofore unappreciated diversity of cell
+types.
