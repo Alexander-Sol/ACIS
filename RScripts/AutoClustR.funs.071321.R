@@ -259,14 +259,18 @@ b1 <- Baron.to.SCexp("Data/Baron-1/GSM2230757_human1_umifm_counts.csv")
 b1 <- Prep.data(b1)
 b1 <- Proc.data(b1)
 
-kolodz <- Kolodz.to.SCexp("Data/Kolodz/counttable_es.csv")
-kolodz <- Prep.data(kolodz)
-kolodz <- Proc.data(kolodz, expr.meas = "cpm")
-ACTest <- AutoClustR(kolodz,
+# kolodz <- Kolodz.to.SCexp("Data/Kolodz/counttable_es.csv")
+# kolodz <- Prep.data(kolodz)
+# kolodz <- Proc.data(kolodz, expr.meas = "cpm")
+
+sc.runtime <- Sys.time()
+ACTest <- AutoClustR(b1,
                      file.path = "",
                      method = "Bayesian",
                      n.priors = 16,
                      n.starts = 16)
+sc.runtime <- Sys.time() - sc.runtime
+
 sc.runtime <- Sys.time()
 sc.test <- subcluster(ACTest)
 sc.runtime <- Sys.time() - sc.runtime
