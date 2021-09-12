@@ -85,7 +85,7 @@ SC3.flow <- function(data, expr.meas, seed = NULL) {
                      seed = seed)
   runtime <- Sys.time() - start.time
   units(runtime) <- "mins"
-  eval <- Test.method(results$object, method = "sc3")
+  eval <- Test.method(results$object, method = "sc3", expr.meas = expr.meas)
   
   return( 
     c(

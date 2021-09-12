@@ -53,20 +53,47 @@ Loh.to.SCexp <- function(file.path){
 }
 
 Menon.to.SCexp <- function(data.file.path, feat.file.path, cell.file.path, sample = c("MR", "PR", "MR2", "PR2", "MR3", "PR3")){
-
-# library(Matrix)
-# library(SingleCellExperiment)
-
+  
+  # library(Matrix)
+  # library(SingleCellExperiment)
+  
   data <- readMM(file = data.file.path)
   features <- read.delim(file = feat.file.path, header = FALSE)
   cells <- read.delim(file = cell.file.path)
   dimnames(data) <- list(features[, 1], cells[, 1])
-  data <- as.matrix(data[, cells[, 2] == sample])
-  labels <- cells[cells[, 2] == sample, 49]
+  data <- as.matrix(data[, cells[, 2] %in% sample])
+  labels <- cells[cells[, 2] %in% sample, 49]
   data <- SingleCellExperiment(assays = list(counts = data), colData = list(labels = labels))
-
+  
   return(value = data)
 }
+
+#As of right now, this doesn't work. Algorithms will cluster it, but terribly. I'm not sure whats going on with it.
+Menon.to.SCexp.mnn <- function(data.file.path,
+                               feat.file.path,
+                               cell.file.path,
+                               sample = c("MR", "PR", "MR2", "PR2", "MR3", "PR3")){
+
+  whole.data <- readMM(file = data.file.path)
+  features <- read.delim(file = feat.file.path, header = FALSE)
+  cells <- read.delim(file = cell.file.path)
+  dimnames(whole.data) <- list(features[, 1], cells[, 1])
+  data <- list()
+  for(set in sample) {
+    data[[set]]<- as.matrix(whole.data[, cells[, 2] == set])
+    labels <- cells[cells[, 2] == set, 49]
+    data[[set]] <- SingleCellExperiment(assays = list(counts = data[[set]]), colData = list(labels = labels))
+    data[[set]] <- Remove.ERCCs(data[[set]]) %>% Filter.cells()
+    logcounts(data[[set]]) <- log1p(counts(data[[set]]))
+  }
+  data <- mnnCorrect(unlist(data),
+                     cos.norm.out = FALSE)
+  counts(data) <- assay(data, "corrected") %>% exp()
+  data <- Remove.zeroes(data) # This must be done after correction/merging, otherwise genes won't match across samples
+  data$labels <- labels <- cells[(cells$tissue %in% sample) & (cells$Barcode %in% colnames(data)) , 49]
+  
+  return(value = data)
+} 
 
 Pollen.to.SCexp <- function(file.path){
 

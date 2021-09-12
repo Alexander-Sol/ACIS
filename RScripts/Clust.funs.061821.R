@@ -1,44 +1,3 @@
-# Run.CellFindR <- function(data, file.path, expr.meas = "umi"){
-# 
-#   library(Seurat)
-#   library(SingleCellExperiment)
-#   library(tidyverse)
-# 
-#   # Note: Set RunUMAP(verbose = FALSE) in CellFindR source code
-#   # Note: For Seurat v4, set Find[All]Markers(base = exp(1)) in CellFindR source code
-#   object <- CreateSeuratObject(counts = counts(data))
-#   object@meta.data$labels <- colData(data)$labels
-#   object@meta.data$n.features <- colData(data)$n.features
-#   object@meta.data$pct.mito <- colData(data)$pct.mito
-# 
-#   if(expr.meas == "umi"){
-# 
-#     object <- NormalizeData(object = object, scale.factor = 1e6) %>%
-#       FindVariableFeatures() %>%
-#       ScaleData(vars.to.regress = c("pct.mito", "n.features")) 
-# 
-#   }else if(expr.meas == "tpm" | expr.meas == "cpm"){
-# 
-#     # Note: For expr.meas = "tpm" or "cpm", set FindVariableFeatures(selection.method = "mvp") in CellFindR source code 
-#     object@assays$RNA <- CreateAssayObject(data = log1p(counts(data)))
-#     object <- FindVariableFeatures(object = object, selection.method = "mvp") %>%
-#       ScaleData(vars.to.regress = c("pct.mito", "n.features"))
-# 
-#   }
-#   
-#   object <- RunPCA(object = object) %>%
-#     FindNeighbors(dims = 1:20) %>%
-#     FindClusters(resolution = 0.1) %>%
-#     RunUMAP(dims = 1:20)
-# 
-#   resolution <- find_res(tenx = object)
-# 
-#   object <- FindClusters(object = object, resolution = resolution) %>%
-#     sub_clustering(output_folder = file.path)
-# 
-#   return(value = object)
-# }
-
 Run.CellTrails <- function(data, expr.meas = "umi") {
   
   # if(is.null(seed)){
@@ -51,10 +10,15 @@ Run.CellTrails <- function(data, expr.meas = "umi") {
     logcounts(data) <- log1p(1e6 * proportions(counts(data), margin = 2))
   }else if(expr.meas == "tpm" | expr.meas == "cpm"){
     logcounts(data) <- log1p(counts(data))
+  }else if(expr.meas == "mnn"){
+    logcounts(data) <- assay(data, "corrected")
   }
   
   trajFeatureNames(data) <- tfeat <- filterTrajFeaturesByFF(data, threshold = 1.7, show_plot = T)
   data.sub <- data[tfeat, ]
+  # Manual check and subset for zero count cells after filtering
+  data <- data[ , colSums(data.sub@assays@data$counts) != 0]
+  data.sub <- data.sub[ , colSums(data.sub@assays@data$counts) != 0]
   se <- embedSamples(data.sub)
   d <- findSpectrum(se$eigenvalues, frac = 100)
   latentSpace(data) <- se$components[ , d]
@@ -69,7 +33,19 @@ Run.CIDR <- function(data, expr.meas = "umi"){
   # library(SingleCellExperiment)
   # library(tidyverse)
 
-  if(expr.meas == "umi"){
+  if(expr.meas == "umi") {
+    expr.meas <- "raw"
+  } else if(expr.meas == "mnn") {
+    unnormed.data <- assay(data, "corrected") %>% expm1() %>% '/'(1e6) 
+    counts(data) <- apply(unnormed.data[1:1000, 1:10],
+                          MARGIN = 2,
+                          FUN = function(x) { 
+                            if( sum(x>0) ) {
+                              x / min( x[ x>0 ] ) 
+                            } else {
+                              x / 1
+                            }  
+                          }) #This reverses 'proportions', probably
     expr.meas <- "raw"
   }
 
@@ -174,6 +150,10 @@ Run.SC3 <- function(data, expr.meas = "umi", seed = NULL){
     logcounts(data) <- log1p(1e6 * proportions(counts(data), margin = 2))
   }else if(expr.meas == "tpm" | expr.meas == "cpm"){
     logcounts(data) <- log1p(counts(data))
+  } else if(expr.meas == "mnn") {
+    counts(data)[counts(data) == 1] <- 0 # Converting from corrected to counts should be done via expm1, but because 
+                                        # corrected contains 0 < values < 1, subtracting one causes errors down the line
+    logcounts(data) <- assay(data, "corrected")
   }
 
   object <- sc3_prepare(object = data, rand_seed = seed) %>%
