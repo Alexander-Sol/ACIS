@@ -363,7 +363,7 @@ kolodz <- Prep.data(kolodz)
 kolodz <- Proc.data(kolodz, expr.meas = "cpm")
 
 ac.runtime <- Sys.time()
-acResults <- AutoClustR(b1,
+acResults <- AutoClustR(b2,
                      # file.path = "",
                      method = "Bayesian",
                      n.priors = 16,
