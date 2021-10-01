@@ -48,9 +48,15 @@ nPC.vote <- function(x, pcs.use = min(100, max(x[, 1])), ignore.single.counts = 
   return(value = n.pcs[[1]])
 }
 
-Select.nPC <- function(x, file.path, max.pcs = min(100, length(x)), pcs.use = max.pcs, ignore.PC1 = TRUE, ignore.single.counts = TRUE, do.plot = TRUE){
+Select.nPC <- function(x, 
+                       # file.path, 
+                       max.pcs = min(100, length(x)), 
+                       pcs.use = max.pcs, 
+                       ignore.PC1 = TRUE, 
+                       ignore.single.counts = TRUE, 
+                       do.plot = F){
 
-  library(ggplot2)
+  # library(ggplot2)
 
   npc.candidates <- nPC.nom(x, max.pcs = max.pcs, ignore.PC1 = ignore.PC1)
 
@@ -61,13 +67,22 @@ Select.nPC <- function(x, file.path, max.pcs = min(100, length(x)), pcs.use = ma
   }
   
   colnames(npc.tab) <- c("max.pcs", "n.pcs")
+  npc.plot <- ggplot(data = npc.tab, mapping = aes(x = npc.tab[, 1], y = npc.tab[, 2])) + 
+    geom_step(size = 0.75) + 
+    theme_classic() + 
+    theme(axis.title = element_text(size = 14), axis.text = element_text(size = 12)) + 
+    scale_y_log10(breaks = sort(unique(npc.tab[, 2])), limits = c(1, 100)) + 
+    xlab("\nMax.PC") + 
+    ylab("n.PC\n")
+  print(npc.plot)
 
-  if(do.plot){
-    npc.plot <- ggplot(data = npc.tab, mapping = aes(x = npc.tab[, 1], y = npc.tab[, 2])) + geom_step(size = 0.75) + theme_classic() + theme(axis.title = element_text(size = 14), axis.text = element_text(size = 12)) + scale_y_log10(breaks = sort(unique(npc.tab[, 2])), limits = c(1, 100)) + xlab("\nMax.PC") + ylab("n.PC\n")
-    ggsave(filename = "nPC.plot.pdf", plot = npc.plot, path = file.path, width = 8.5, height = 5.0)
-  }
+
+  # if(do.plot){
+  #   npc.plot <- ggplot(data = npc.tab, mapping = aes(x = npc.tab[, 1], y = npc.tab[, 2])) + geom_step(size = 0.75) + theme_classic() + theme(axis.title = element_text(size = 14), axis.text = element_text(size = 12)) + scale_y_log10(breaks = sort(unique(npc.tab[, 2])), limits = c(1, 100)) + xlab("\nMax.PC") + ylab("n.PC\n")
+  #   ggsave(filename = "nPC.plot.pdf", plot = npc.plot, path = file.path, width = 8.5, height = 5.0)
+  # }
   
   n.pcs <- npc.tab[npc.tab[, 1] == pcs.use, 2]
 
-  return(value = list(npc.tab, n.pcs))
+  return(n.pcs)
 }
