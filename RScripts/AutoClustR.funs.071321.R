@@ -12,6 +12,8 @@ library(SingleCellExperiment)
 
 
 # acq.fun = acq argument for ParBayesOpt. Can be one of "ucb", "ei", "eips", "poi"
+#Bayes op requires at least 4 points
+
 AutoClustR <- function(object,
                        # file.path,
                        method = "Bayesian",
@@ -19,11 +21,11 @@ AutoClustR <- function(object,
                          k.param = c(2L, 160L),
                          resolution= c(0.0, 2.0)
                          ),
-                       n.priors = 16,
-                       n.starts = 16,
+                       n.priors = 12,
+                       n.starts = 12,
                        max.iterations = 50,
                        n.pcs = NULL,
-                       acq.func = "ei",
+                       acq.func = "ucb",
                        subcluster = T){
   
   # TODO: Going to have to add some checks to make sure input (i.e., x.bounds)
@@ -57,7 +59,12 @@ AutoClustR <- function(object,
   }
   
   if(subcluster) {
-    sc.results <- subClustR(object, x.bounds, n.priors, n.starts, n.pcs, acq.func)
+    sc.results <- subClustR(object, 
+                            x.bounds = x.bounds,
+                            n.priors = n.priors,
+                            n.starts = n.starts,
+                            n.pcs = n.pcs, 
+                            acq.func = acq.func)
     object <- sc.results$object
     pre.sc <- sc.results$initial.eval
     post.sc <- sc.results$final.eval
@@ -136,8 +143,8 @@ subClustR <- function(object,
                         k.param = c(2L, 160L),
                         resolution= c(0.0, 2.0)
                       ),
-                      n.priors = 16,
-                      n.starts = 16,
+                      n.priors = 12,
+                      n.starts = 12,
                       n.pcs = NULL,
                       acq.func = "ei") {
 
@@ -173,14 +180,15 @@ subClustR <- function(object,
       FUN = function(...){ 
         ClustR(object = sc.object, n.pcs = n.pcs, ...)
       },
-      iters.n = round(n.starts/2), 
-      initPoints = round(n.priors/2), 
+      iters.n = n.starts, 
+      initPoints = n.priors, 
       bounds = x.bounds,
-      acq = "ei"
+      acq = acq.func
     )
     
     sc.object <- bestBayes(sc.object, sc.output, n.pcs = n.pcs)
-    adjust.output <- adjustIdents(object, temp.object = sc.object, npc = n.pcs)
+    
+    adjust.output <- adjustIdents(object, temp.object = sc.object, n.pcs = n.pcs)
     #TODO: I hate storing variable like this. It's probably a sign that I need to create a class and go more object oriented. *shrug* 
     object <- adjust.output$object
     accept <- adjust.output$accept
@@ -220,6 +228,7 @@ getSilScores <- function(object, npc) {
   return(scores.by.cluster)
 }
 
+#TODO: Remove this or rewrite it
 getICVI <- function(object, npc = NULL) {
   icvi <- suppressWarnings(
     index.S(
@@ -235,24 +244,41 @@ getICVI <- function(object, npc = NULL) {
 
 as.int.factor <- function(x) {as.integer(levels(x))[x]}
 
-adjustIdents <- function(object, temp.object, npc) {
-  embeds <- Embeddings(object)[ , 1:npc]
-  new.idents <- as.int.factor(temp.object@active.ident) + 
-    1 + 
+adjustIdents <- function(object, temp.object, n.pcs) {
+  embed.dist <- Embeddings(object)[ , 1:n.pcs] %>% dist(method = "manhattan")
+  
+  new.idents <- as.int.factor(temp.object@active.ident) + 1 + 
     max(as.int.factor(object@active.ident))
   names(new.idents) <- Cells(temp.object)
+  
   combined.new <- as.int.factor(object@active.ident)
   names(combined.new) <- Cells(object)
-  combined.new[names(new.idents)] <- new.idents
-  original.SI <- getICVI(object, npc)
-  # original.SI <- intCriteria(embeds, as.int.factor(object@active.ident), crit = "sil")[[1]]
+  combined.new[names(new.idents)] <- as.integer(new.idents)
+  
+  original.SI <- suppressWarnings(
+    index.S(
+      d = embed.dist,
+      cl = as.integer(Idents(object))
+    )
+  )
   new.SI <-  suppressWarnings(
     index.S(
-      d = dist(
-        Embeddings(object, reduction = "pca")[, 1:npc],
-        method = "manhattan"),
-      cl = combined.new %>% as.factor %>% as.numeric))
-  # new.SI <- intCriteria(embeds, as.integer(combined.new), "sil")[[1]]
+      d = embed.dist,
+      cl = test.cl#combined.new
+      ) # It's concerning that index.S is so fragile and our whole package depends on it...
+    )
+  test.cl <- integer()
+  for( i in seq_len( length(combined.new) ) ){
+    test.cl[i] <- as.integer(unname(combined.new)[i])
+  }
+  #if(is.nan(new.SI)) {new.SI <- 0} ; if(is.nan(original.SI)) {original.SI <- 0}
+  # This is, like, not a great form of error checking, but here we are
+  if(is.nan(new.SI) || is.nan(original.SI)) {
+    embed.pca <- Embeddings(object)[ , 1:n.pcs]
+    original.SI <- intCriteria(embed.pca, as.int.factor(object@active.ident), crit = "sil")[[1]]
+    new.SI <- intCriteria(embed.pca, combined.new, crit = "sil")[[1]]
+    index.s.fails <<- index.s.fails + 1
+  }
   if(original.SI > new.SI) {
     print(paste(object@project.name, "REJECTED sub clustering"))
     print(paste("Original:", round(original.SI, 4), "New:", round(new.SI, 4)))
@@ -357,6 +383,7 @@ b2 <- Baron.to.SCexp("Data/Baron-2/GSM2230758_human2_umifm_counts.csv")
 b2 <- Prep.data(b2)
 b2 <- Proc.data(b2)
 
+resTest <- AutoClustR.flow(data = b1, expr.meas = "umi")
 
 kolodz <- Kolodz.to.SCexp("Data/Kolodz/counttable_es.csv")
 kolodz <- Prep.data(kolodz)

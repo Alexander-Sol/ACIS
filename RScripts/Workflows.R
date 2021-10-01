@@ -1,5 +1,20 @@
 #Workflows
 
+AutoClustR.flow <- function(data, expr.meas) {
+  start.time <- Sys.time()
+  data <- Proc.data(data = data, expr.meas = expr.meas)
+  results <- AutoClustR(object = data,
+                        method = "Bayesian",
+                        subcluster = T,
+                        n.priors = 6,
+                        n.starts = 6)
+  runtime <- Sys.time() - start.time
+  units(runtime) <- "mins"
+  results[["totalRuntime"]] <- runtime
+  
+  return(results)
+}
+
 CellTrails.flow <- function(data, expr.meas) {
   
   start.time <- Sys.time()
