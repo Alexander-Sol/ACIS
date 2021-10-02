@@ -18,7 +18,7 @@ AutoClustR <- function(object,
                        # file.path,
                        method = "Bayesian",
                        x.bounds = list(
-                         k.param = c(2L, 160L),
+                         k.param = c(5L, 160L),
                          resolution= c(0.0, 2.0)
                          ),
                        n.priors = 12,
@@ -45,6 +45,10 @@ AutoClustR <- function(object,
 
   if(method == "Bayesian") {
     
+    if (x.bounds$k.param[2] > ncol(object)/2) {
+      x.bounds$k.param[2] <- round(ncol(object)/2) 
+      x.bounds$k.param <- as.integer( x.bounds$k.param)
+      }
     set.seed(seed)
     output <- ParBayesianOptimization::bayesOpt(
       FUN = function(...){ 
@@ -178,7 +182,7 @@ subClustR <- function(object,
       if (sc.k.param.range[2] <= 4) {cl.iter <- cl.iter + 1} else {check.clusters <- FALSE}
     }
     
-    x.bounds <- list(k.param = sc.k.param.range, resolution = c(0.0, 2.0))
+    x.bounds <- list(k.param = as.integer(sc.k.param.range), resolution = c(0.0, 2.0))
     
     set.seed(seed)
     sc.output <- ParBayesianOptimization::bayesOpt(

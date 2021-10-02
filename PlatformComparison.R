@@ -39,6 +39,8 @@ source("RScripts/Workflows.R")
 source("RScripts/nPC.funs.R")
 source("RScripts/AutoClustR.funs.071321.R")
 
+#TODO: Add Zeisel data, benchmark (woops)
+
 #Expression Key
 expr.key <- list(
   Baron = "umi",
@@ -144,35 +146,18 @@ rm(loh, AutoClustR.results.loh)
 MenonPR <- Menon.to.SCexp(data.file.path = "Data/Menon-P/GSE137537_counts.mtx",
                                  feat.file.path = "Data/Menon-P/GSE137537_gene_names.txt",
                                  cell.file.path = "Data/Menon-P/GSE137537_sample_annotations.tsv",
-                                 sample = c("PR", "PR2", "PR3")) %>%
+                                 sample = c("PR")) %>%
   Prep.data()
 AutoClustR.results.MenonPR <- list()
-for (i in 1:10){
+for (i in 1:2){
   #Seed has to be integer value
   seed <- as.numeric( Sys.time() ) * seeds[i] 
-  AutoClustR.results.MenonPR[[i]]  <- AutoClustR.flow(MenonPR, expr.meas = expr.key$MenonPR, seed = seed)
+  AutoClustR.results.MenonPR[[i]]  <- AutoClustR.flow(MenonPR, expr.meas = expr.key$Menon, seed = seed)
   AutoClustR.results.MenonPR[[i]][["seed"]] <- seed
 }
 
 saveRDS(AutoClustR.results.MenonPR, file = "Results/AutoClustR/MenonPR.rds")
 rm(MenonPR, AutoClustR.results.MenonPR)
-
-# MenonMR
-MenonMR <- Menon.to.SCexp(data.file.path = "Data/Menon-P/GSE137537_counts.mtx",
-                          feat.file.path = "Data/Menon-P/GSE137537_gene_names.txt",
-                          cell.file.path = "Data/Menon-P/GSE137537_sample_annotations.tsv",
-                          sample = c("MR", "MR2", "MR3")) %>%
-  Prep.data()
-AutoClustR.results.MenonMR <- list()
-for (i in 1:10){
-  #Seed has to be integer value
-  seed <- as.numeric( Sys.time() ) * seeds[i] 
-  AutoClustR.results.MenonMR[[i]]  <- AutoClustR.flow(MenonMR, expr.meas = expr.key$Menon, seed = seed)
-  AutoClustR.results.MenonMR[[i]][["seed"]] <- seed
-}
-
-saveRDS(AutoClustR.results.MenonMR, file = "Results/AutoClustR/MenonMR.rds")
-rm(MenonMR, AutoClustR.results.MenonMR)
 
 # MenonMR
 MenonMR <- Menon.to.SCexp(data.file.path = "Data/Menon-P/GSE137537_counts.mtx",
@@ -218,6 +203,9 @@ for (i in 1:10){
 
 saveRDS(AutoClustR.results.Ranum, file = "Results/AutoClustR/Ranum.rds")
 rm(Ranum, AutoClustR.results.Ranum)
+
+menonres <- readRDS("Results/AutoClustR/Goolam.rds")
+
 
 # Baron 1 ----
 b1 <- Baron.to.SCexp("Data/Baron-1/GSM2230757_human1_umifm_counts.csv")
