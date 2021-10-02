@@ -26,7 +26,8 @@ AutoClustR <- function(object,
                        max.iterations = 50,
                        n.pcs = NULL,
                        acq.func = "ucb",
-                       subcluster = T){
+                       subcluster = T,
+                       seed = 1234){
   
   # TODO: Going to have to add some checks to make sure input (i.e., x.bounds)
   #       is properly formatted. This is probably the most delicate part
@@ -44,6 +45,7 @@ AutoClustR <- function(object,
 
   if(method == "Bayesian") {
     
+    set.seed(seed)
     output <- ParBayesianOptimization::bayesOpt(
       FUN = function(...){ 
         ClustR(object = object, n.pcs = n.pcs, ...)
@@ -64,7 +66,8 @@ AutoClustR <- function(object,
                             n.priors = n.priors,
                             n.starts = n.starts,
                             n.pcs = n.pcs, 
-                            acq.func = acq.func)
+                            acq.func = acq.func,
+                            seed = seed)
     object <- sc.results$object
     pre.sc <- sc.results$initial.eval
     post.sc <- sc.results$final.eval
@@ -73,7 +76,7 @@ AutoClustR <- function(object,
   
   return(
     list(
-      object = object,
+      #object = object, temporary, just don't want to save a billion things to memory when benchmarking
       method = method,
       n.pcs = n.pcs,
       pre.sc = pre.sc,
@@ -146,7 +149,8 @@ subClustR <- function(object,
                       n.priors = 12,
                       n.starts = 12,
                       n.pcs = NULL,
-                      acq.func = "ei") {
+                      acq.func = "ucb",
+                      seed = seed) {
 
   # Test.method returns list of n.clusters and ARI
   # So this should remain internal/ be removed before package is published
@@ -176,11 +180,12 @@ subClustR <- function(object,
     
     x.bounds <- list(k.param = sc.k.param.range, resolution = c(0.0, 2.0))
     
+    set.seed(seed)
     sc.output <- ParBayesianOptimization::bayesOpt(
       FUN = function(...){ 
         ClustR(object = sc.object, n.pcs = n.pcs, ...)
       },
-      iters.n = n.starts, 
+      iters.n = n.starts/2, #So this is pretty ad hoc (ad hack lmao), but i think the time it takes to generate these (potentially noisy) GPs isn't worth the benefit they provide beyone like 5 iterations
       initPoints = n.priors, 
       bounds = x.bounds,
       acq = acq.func
@@ -264,20 +269,17 @@ adjustIdents <- function(object, temp.object, n.pcs) {
   new.SI <-  suppressWarnings(
     index.S(
       d = embed.dist,
-      cl = test.cl#combined.new
-      ) # It's concerning that index.S is so fragile and our whole package depends on it...
+      cl = as.factor(combined.new) %>% as.integer()
+      ) #clusters have to be consecutive integers!!
     )
-  test.cl <- integer()
-  for( i in seq_len( length(combined.new) ) ){
-    test.cl[i] <- as.integer(unname(combined.new)[i])
-  }
   #if(is.nan(new.SI)) {new.SI <- 0} ; if(is.nan(original.SI)) {original.SI <- 0}
   # This is, like, not a great form of error checking, but here we are
   if(is.nan(new.SI) || is.nan(original.SI)) {
-    embed.pca <- Embeddings(object)[ , 1:n.pcs]
-    original.SI <- intCriteria(embed.pca, as.int.factor(object@active.ident), crit = "sil")[[1]]
-    new.SI <- intCriteria(embed.pca, combined.new, crit = "sil")[[1]]
-    index.s.fails <<- index.s.fails + 1
+    return(list(object = object, accept = NaN))
+    # embed.pca <- Embeddings(object)[ , 1:n.pcs]
+    # original.SI <- intCriteria(embed.pca, as.int.factor(object@active.ident), crit = "sil")[[1]]
+    # new.SI <- intCriteria(embed.pca, combined.new, crit = "sil")[[1]]
+    # index.s.fails <<- index.s.fails + 1
   }
   if(original.SI > new.SI) {
     print(paste(object@project.name, "REJECTED sub clustering"))
@@ -371,28 +373,27 @@ Proc.data <- function(data, algorithm = "seurat", expr.meas = "umi", n.features 
   return(value = object)
 }
 
-source("RScripts/nPC.funs.R")
-
-#Should be sourcing stuff here, but
-# TODO: Add verbosity option to AutoClustR
-b1 <- Baron.to.SCexp("Data/Baron-1/GSM2230757_human1_umifm_counts.csv")
-b1 <- Prep.data(b1)
-b1 <- Proc.data(b1)
-
-b2 <- Baron.to.SCexp("Data/Baron-2/GSM2230758_human2_umifm_counts.csv")
-b2 <- Prep.data(b2)
-b2 <- Proc.data(b2)
-
-resTest <- AutoClustR.flow(data = b1, expr.meas = "umi")
-
-kolodz <- Kolodz.to.SCexp("Data/Kolodz/counttable_es.csv")
-kolodz <- Prep.data(kolodz)
-kolodz <- Proc.data(kolodz, expr.meas = "cpm")
-
-ac.runtime <- Sys.time()
-acResults <- AutoClustR(b2,
-                     # file.path = "",
-                     method = "Bayesian",
-                     n.priors = 16,
-                     n.starts = 16)
-ac.runtime <- Sys.time() - ac.runtime
+# source("RScripts/nPC.funs.R")
+# 
+# #Should be sourcing stuff here, but
+# # TODO: Add verbosity option to AutoClustR
+# b1 <- Baron.to.SCexp("Data/Baron-1/GSM2230757_human1_umifm_counts.csv")
+# b1 <- Prep.data(b1)
+# b1 <- Proc.data(b1)
+# 
+# b2 <- Baron.to.SCexp("Data/Baron-2/GSM2230758_human2_umifm_counts.csv")
+# b2 <- Prep.data(b2)
+# 
+# resTest <- AutoClustR.flow(data = b2, expr.meas = "umi")
+# 
+# kolodz <- Kolodz.to.SCexp("Data/Kolodz/counttable_es.csv")
+# kolodz <- Prep.data(kolodz)
+# kolodz <- Proc.data(kolodz, expr.meas = "cpm")
+# 
+# ac.runtime <- Sys.time()
+# acResults <- AutoClustR(b2,
+#                      # file.path = "",
+#                      method = "Bayesian",
+#                      n.priors = 16,
+#                      n.starts = 16)
+# ac.runtime <- Sys.time() - ac.runtime

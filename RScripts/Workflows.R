@@ -1,13 +1,14 @@
 #Workflows
 
-AutoClustR.flow <- function(data, expr.meas) {
+AutoClustR.flow <- function(data, expr.meas, seed) {
   start.time <- Sys.time()
   data <- Proc.data(data = data, expr.meas = expr.meas)
   results <- AutoClustR(object = data,
                         method = "Bayesian",
                         subcluster = T,
-                        n.priors = 6,
-                        n.starts = 6)
+                        n.priors = 12,
+                        n.starts = 12,
+                        seed = seed)
   runtime <- Sys.time() - start.time
   units(runtime) <- "mins"
   results[["totalRuntime"]] <- runtime

@@ -36,6 +36,8 @@ source("RScripts/ROUGHPrep.funs.061821.R")
 source("RScripts/Clust.funs.061821.R")
 source("RScripts/RoughTest.funs.R")
 source("RScripts/Workflows.R")
+source("RScripts/nPC.funs.R")
+source("RScripts/AutoClustR.funs.071321.R")
 
 #Expression Key
 expr.key <- list(
@@ -63,6 +65,159 @@ res.template <- list(
   SC3 = results.table,
   Seurat = results.table
 )
+
+seeds <- runif(40)
+
+# Ad Hoc AutoClustR ----
+
+#Baron 1
+b1 <- Baron.to.SCexp("Data/Baron-1/GSM2230757_human1_umifm_counts.csv")
+b1 <- Prep.data(b1)
+AutoClustR.results.B1 <- list()
+for (i in 1:10){
+  #Seed has to be integer value
+  seed <- as.numeric( Sys.time() ) * seeds[i] 
+  AutoClustR.results.B1[[i]]  <- AutoClustR.flow(b1, expr.meas = expr.key$Baron, seed = seed)
+  AutoClustR.results.B1[[i]][["seed"]] <- seed
+}
+
+saveRDS(AutoClustR.results.B1, file = "Results/AutoClustR/Baron1.rds")
+rm(b1, AutoClustR.results.B1)
+
+# Baron 2
+b2 <- Baron.to.SCexp("Data/Baron-2/GSM2230758_human2_umifm_counts.csv") %>%
+  Prep.data()
+AutoClustR.results.b2 <- list()
+for (i in 1:10){
+  #Seed has to be integer value
+  seed <- as.numeric( Sys.time() ) * seeds[i] 
+  AutoClustR.results.b2[[i]]  <- AutoClustR.flow(b2, expr.meas = expr.key$Baron, seed = seed)
+  AutoClustR.results.b2[[i]][["seed"]] <- seed
+}
+
+saveRDS(AutoClustR.results.b2, file = "Results/AutoClustR/Baron2.rds")
+rm(b2, AutoClustR.results.b2)
+
+# Goolam
+goolam <- Goolam.to.SCexp("Data/Goolam/Goolam_et_al_2015_count_table.tsv") %>%
+  Prep.data()
+AutoClustR.results.goolam <- list()
+for (i in 1:10){
+  #Seed has to be integer value
+  seed <- as.numeric( Sys.time() ) * seeds[i] 
+  AutoClustR.results.goolam[[i]]  <- AutoClustR.flow(goolam, expr.meas = expr.key$Goolam, seed = seed)
+  AutoClustR.results.goolam[[i]][["seed"]] <- seed
+}
+
+saveRDS(AutoClustR.results.goolam, file = "Results/AutoClustR/Goolam.rds")
+rm(goolam, AutoClustR.results.goolam)
+
+# Kolodz
+kolodz <- Kolodz.to.SCexp("Data/Kolodz/counttable_es.csv") %>%
+  Prep.data()
+AutoClustR.results.kolodz <- list()
+for (i in 1:10){
+  #Seed has to be integer value
+  seed <- as.numeric( Sys.time() ) * seeds[i] 
+  AutoClustR.results.kolodz[[i]]  <- AutoClustR.flow(kolodz, expr.meas = expr.key$Kolodz, seed = seed)
+  AutoClustR.results.kolodz[[i]][["seed"]] <- seed
+}
+
+saveRDS(AutoClustR.results.kolodz, file = "Results/AutoClustR/Kolodz.rds")
+rm(kolodz, AutoClustR.results.kolodz)
+
+# Loh
+loh <- Loh.to.SCexp("Data/Loh/GSM2257302_All_samples_sc_tpm.txt") %>%
+  Prep.data()
+AutoClustR.results.loh <- list()
+for (i in 1:10){
+  #Seed has to be integer value
+  seed <- as.numeric( Sys.time() ) * seeds[i] 
+  AutoClustR.results.loh[[i]]  <- AutoClustR.flow(loh, expr.meas = expr.key$Loh, seed = seed)
+  AutoClustR.results.loh[[i]][["seed"]] <- seed
+}
+
+saveRDS(AutoClustR.results.loh, file = "Results/AutoClustR/Loh.rds")
+rm(loh, AutoClustR.results.loh)
+
+# MenonPR
+MenonPR <- Menon.to.SCexp(data.file.path = "Data/Menon-P/GSE137537_counts.mtx",
+                                 feat.file.path = "Data/Menon-P/GSE137537_gene_names.txt",
+                                 cell.file.path = "Data/Menon-P/GSE137537_sample_annotations.tsv",
+                                 sample = c("PR", "PR2", "PR3")) %>%
+  Prep.data()
+AutoClustR.results.MenonPR <- list()
+for (i in 1:10){
+  #Seed has to be integer value
+  seed <- as.numeric( Sys.time() ) * seeds[i] 
+  AutoClustR.results.MenonPR[[i]]  <- AutoClustR.flow(MenonPR, expr.meas = expr.key$MenonPR, seed = seed)
+  AutoClustR.results.MenonPR[[i]][["seed"]] <- seed
+}
+
+saveRDS(AutoClustR.results.MenonPR, file = "Results/AutoClustR/MenonPR.rds")
+rm(MenonPR, AutoClustR.results.MenonPR)
+
+# MenonMR
+MenonMR <- Menon.to.SCexp(data.file.path = "Data/Menon-P/GSE137537_counts.mtx",
+                          feat.file.path = "Data/Menon-P/GSE137537_gene_names.txt",
+                          cell.file.path = "Data/Menon-P/GSE137537_sample_annotations.tsv",
+                          sample = c("MR", "MR2", "MR3")) %>%
+  Prep.data()
+AutoClustR.results.MenonMR <- list()
+for (i in 1:10){
+  #Seed has to be integer value
+  seed <- as.numeric( Sys.time() ) * seeds[i] 
+  AutoClustR.results.MenonMR[[i]]  <- AutoClustR.flow(MenonMR, expr.meas = expr.key$Menon, seed = seed)
+  AutoClustR.results.MenonMR[[i]][["seed"]] <- seed
+}
+
+saveRDS(AutoClustR.results.MenonMR, file = "Results/AutoClustR/MenonMR.rds")
+rm(MenonMR, AutoClustR.results.MenonMR)
+
+# MenonMR
+MenonMR <- Menon.to.SCexp(data.file.path = "Data/Menon-P/GSE137537_counts.mtx",
+                          feat.file.path = "Data/Menon-P/GSE137537_gene_names.txt",
+                          cell.file.path = "Data/Menon-P/GSE137537_sample_annotations.tsv",
+                          sample = c("MR", "MR2", "MR3")) %>%
+  Prep.data()
+AutoClustR.results.MenonMR <- list()
+for (i in 1:10){
+  #Seed has to be integer value
+  seed <- as.numeric( Sys.time() ) * seeds[i] 
+  AutoClustR.results.MenonMR[[i]]  <- AutoClustR.flow(MenonMR, expr.meas = expr.key$Menon, seed = seed)
+  AutoClustR.results.MenonMR[[i]][["seed"]] <- seed
+}
+
+saveRDS(AutoClustR.results.MenonMR, file = "Results/AutoClustR/MenonMR.rds")
+rm(MenonMR, AutoClustR.results.MenonMR)
+
+# Pollen
+Pollen <- Pollen.to.SCexp("Data/Pollen/NBT_hiseq_linear_tpm_values.txt") %>%
+  Prep.data()
+AutoClustR.results.Pollen <- list()
+for (i in 1:10){
+  #Seed has to be integer value
+  seed <- as.numeric( Sys.time() ) * seeds[i] 
+  AutoClustR.results.Pollen[[i]]  <- AutoClustR.flow(Pollen, expr.meas = expr.key$Pollen, seed = seed)
+  AutoClustR.results.Pollen[[i]][["seed"]] <- seed
+}
+
+saveRDS(AutoClustR.results.Pollen, file = "Results/AutoClustR/Pollen.rds")
+rm(Pollen, AutoClustR.results.Pollen)
+
+# Ranum
+Ranum <- Ranum.to.SCexp("Data/Ranum/GSE114157_p15_Expression_Matrix.csv") %>%
+  Prep.data()
+AutoClustR.results.Ranum <- list()
+for (i in 1:10){
+  #Seed has to be integer value
+  seed <- as.numeric( Sys.time() ) * seeds[i] 
+  AutoClustR.results.Ranum[[i]]  <- AutoClustR.flow(Ranum, expr.meas = expr.key$Ranum, seed = seed)
+  AutoClustR.results.Ranum[[i]][["seed"]] <- seed
+}
+
+saveRDS(AutoClustR.results.Ranum, file = "Results/AutoClustR/Ranum.rds")
+rm(Ranum, AutoClustR.results.Ranum)
 
 # Baron 1 ----
 b1 <- Baron.to.SCexp("Data/Baron-1/GSM2230757_human1_umifm_counts.csv")
