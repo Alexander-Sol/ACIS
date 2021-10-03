@@ -163,10 +163,10 @@ rm(MenonPR, AutoClustR.results.MenonPR)
 MenonMR <- Menon.to.SCexp(data.file.path = "Data/Menon-P/GSE137537_counts.mtx",
                           feat.file.path = "Data/Menon-P/GSE137537_gene_names.txt",
                           cell.file.path = "Data/Menon-P/GSE137537_sample_annotations.tsv",
-                          sample = c("MR", "MR2", "MR3")) %>%
+                          sample = c("MR")) %>%
   Prep.data()
 AutoClustR.results.MenonMR <- list()
-for (i in 1:10){
+for (i in 1:1){
   #Seed has to be integer value
   seed <- as.numeric( Sys.time() ) * seeds[i] 
   AutoClustR.results.MenonMR[[i]]  <- AutoClustR.flow(MenonMR, expr.meas = expr.key$Menon, seed = seed)
