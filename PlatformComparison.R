@@ -149,7 +149,7 @@ MenonPR <- Menon.to.SCexp(data.file.path = "Data/Menon-P/GSE137537_counts.mtx",
                                  sample = c("PR")) %>%
   Prep.data()
 AutoClustR.results.MenonPR <- list()
-for (i in 1:2){
+for (i in 1:10){
   #Seed has to be integer value
   seed <- as.numeric( Sys.time() ) * seeds[i] 
   AutoClustR.results.MenonPR[[i]]  <- AutoClustR.flow(MenonPR, expr.meas = expr.key$Menon, seed = seed)
@@ -166,7 +166,7 @@ MenonMR <- Menon.to.SCexp(data.file.path = "Data/Menon-P/GSE137537_counts.mtx",
                           sample = c("MR")) %>%
   Prep.data()
 AutoClustR.results.MenonMR <- list()
-for (i in 1:1){
+for (i in 1:10){
   #Seed has to be integer value
   seed <- as.numeric( Sys.time() ) * seeds[i] 
   AutoClustR.results.MenonMR[[i]]  <- AutoClustR.flow(MenonMR, expr.meas = expr.key$Menon, seed = seed)
@@ -204,8 +204,8 @@ for (i in 1:10){
 saveRDS(AutoClustR.results.Ranum, file = "Results/AutoClustR/Ranum.rds")
 rm(Ranum, AutoClustR.results.Ranum)
 
-menonres <- readRDS("Results/AutoClustR/Goolam.rds")
-
+menonres <- readRDS("Results/AutoClustR/MenonMR.rds")
+sapply(menonres, FUN = function(x) pluck(x, "post.sc", "ARI"))
 
 # Baron 1 ----
 b1 <- Baron.to.SCexp("Data/Baron-1/GSM2230757_human1_umifm_counts.csv")
@@ -325,7 +325,7 @@ rm(Loh)
 MenonPR <- Menon.to.SCexp(data.file.path = "Data/Menon-P/GSE137537_counts.mtx",
                           feat.file.path = "Data/Menon-P/GSE137537_gene_names.txt",
                           cell.file.path = "Data/Menon-P/GSE137537_sample_annotations.tsv",
-                          sample = c("PR", "PR2", "PR3")) %>%
+                          sample = c("PR")) %>%
   Prep.data()
 MenonPR.results <- res.template
 seeds <- runif(40)
@@ -340,11 +340,11 @@ for(i in 1:3) {
                                        seed = (Sys.time() %>% as.numeric()) * seeds[i+20])
   MenonPR.results$Seurat[ i, ] <- Seurat.flow(data = MenonPR, expr.meas = expr.key$Menon,
                                              seed = (Sys.time() %>% as.numeric()) * seeds[i+30])
-  saveRDS(MenonPR.results, file = "Results/MenonPR/MenonPR.rds")
+  saveRDS(MenonPR.results, file = "Results/MenonPR/MenonPR_Small.rds")
 }
-saveRDS(MenonPR.results, file = "Results/MenonPR/MenonPR.rds")
+saveRDS(MenonPR.results, file = "Results/MenonPR/MenonPR_Small.rds")
 for(algo in names(MenonPR.results)) {
-  write.csv(MenonPR.results[[algo]], file = paste0("Results/MenonPR/MenonPR_", algo, ".csv" ))
+  write.csv(MenonPR.results[[algo]], file = paste0("Results/MenonPR/MenonPR_Small", algo, ".csv" ))
 }
 rm(MenonPR)
 
@@ -352,11 +352,13 @@ rm(MenonPR)
 MenonMR <- Menon.to.SCexp(data.file.path = "Data/Menon-P/GSE137537_counts.mtx",
                           feat.file.path = "Data/Menon-P/GSE137537_gene_names.txt",
                           cell.file.path = "Data/Menon-P/GSE137537_sample_annotations.tsv",
-                          sample = c("MR", "MR2", "MR3")) %>%
+                          sample = c("MR")) %>%
   Prep.data()
 MenonMR.results <- res.template
-seeds <- runif(40)
+seeds <- runif(50)
 for(i in 1:3) {
+  MenonMR.results$AutoClustR[ i, ] <- AutoClustR.flow(data = MenonMR, expr.meas = expr.key$Menon,
+                                                      seed = (Sys.time() %>% as.numeric()) * seeds[i + 40] )
   MenonMR.results$CellTrails[ i, ] <- CellTrails.flow(data = MenonMR, expr.meas = expr.key$Menon)
   MenonMR.results$CIDR[ i, ] <- CIDR.flow(data = MenonMR, expr.meas = expr.key$Menon)
   MenonMR.results$IKAP[ i, ] <- IKAP.flow(data = MenonMR, expr.meas = expr.key$Menon,
@@ -367,11 +369,11 @@ for(i in 1:3) {
                                         seed = (Sys.time() %>% as.numeric()) * seeds[i+20])
   MenonMR.results$Seurat[ i, ] <- Seurat.flow(data = MenonMR, expr.meas = expr.key$Menon,
                                               seed = (Sys.time() %>% as.numeric()) * seeds[i+30])
-  saveRDS(MenonMR.results, file = "Results/MenonMR/MenonMR.rds")
+  saveRDS(MenonMR.results, file = "Results/MenonMR/MenonMR_Small.rds")
 }
-saveRDS(MenonMR.results, file = "Results/MenonMR/MenonMR.rds")
+saveRDS(MenonMR.results, file = "Results/MenonMR/MenonMR_Small.rds")
 for(algo in names(MenonMR.results)) {
-  write.csv(MenonMR.results[[algo]], file = paste0("Results/MenonMR/MenonMR_", algo, ".csv" ))
+  write.csv(MenonMR.results[[algo]], file = paste0("Results/MenonMR/MenonMR_Small", algo, ".csv" ))
 }
 rm(MenonMR)
 # Menon PR Corrected ----

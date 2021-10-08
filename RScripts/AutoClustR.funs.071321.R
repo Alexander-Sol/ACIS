@@ -19,7 +19,7 @@ AutoClustR <- function(object,
                        method = "Bayesian",
                        x.bounds = list(
                          k.param = c(5L, 160L),
-                         resolution= c(0.0, 2.0)
+                         resolution= c(0.01, 2.0)
                          ),
                        n.priors = 12,
                        n.starts = 12,
@@ -148,7 +148,7 @@ ClustR <- function(object = object,
 subClustR <- function(object,
                       x.bounds = list(
                         k.param = c(2L, 160L),
-                        resolution= c(0.0, 2.0)
+                        resolution= c(0.01, 2.0)
                       ),
                       n.priors = 12,
                       n.starts = 12,

@@ -13,7 +13,13 @@ AutoClustR.flow <- function(data, expr.meas, seed) {
   units(runtime) <- "mins"
   results[["totalRuntime"]] <- runtime
   
-  return(results)
+  return(
+    c(
+      results$post.sc$ARI,
+      results$post.sc$n.clusters,
+      runtime,
+      seed)
+  )
 }
 
 CellTrails.flow <- function(data, expr.meas) {
