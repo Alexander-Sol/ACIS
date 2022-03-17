@@ -9,6 +9,8 @@ library(cidr)
 library(Rtsne)
 library(Seurat)
 library(SingleCellExperiment)
+source('~/Dropbox/Mac/Documents/AutoClustR/ACIS/RScripts/nPC.funs.R', echo=TRUE)
+source("/Users/alexander/Dropbox/Mac/Documents/AutoClustR/ACIS/RScripts/ROUGHTest.funs.R")
 
 
 # acq.fun = acq argument for ParBayesOpt. Can be one of "ucb", "ei", "eips", "poi"
@@ -80,7 +82,7 @@ AutoClustR <- function(object,
   
   return(
     list(
-      #object = object, temporary, just don't want to save a billion things to memory when benchmarking
+      object = object, #temporary,  remove when benchmarking ## just don't want to save a billion things to memory when benchmarking
       method = method,
       n.pcs = n.pcs,
       pre.sc = pre.sc,
@@ -146,6 +148,8 @@ ClustR <- function(object = object,
 #Currently, subClustR halts whenever a sub-clustered solution proves worse than the previous clustering solution
 #We should give an option to tune that parameter in some way
 subClustR <- function(object,
+                      forceSC = FALSE,
+                      manualSCCluster = NULL,
                       x.bounds = list(
                         k.param = c(2L, 160L),
                         resolution= c(0.01, 2.0)
@@ -154,35 +158,32 @@ subClustR <- function(object,
                       n.starts = 12,
                       n.pcs = NULL,
                       acq.func = "ucb",
-                      seed = seed) {
+                      seed = 12345) {
 
   # Test.method returns list of n.clusters and ARI
   # So this should remain internal/ be removed before package is published
-  initial.eval.Test <- Test.method(object, method = "autoclustr") 
+  #initial.eval.Test <- Test.method(object, method = "autoclustr") 
   
-  projections <- Embeddings(object = object)[, 1:n.pcs] #projections won't change, so can be stored and re=used
-  initial.clusters <- as.integer(Idents(object))
-  initial.ICVI <- index.S(d = dist(projections, method = "manhattan"), cl = initial.clusters)
-  accept = T
-  accept.count = 0
   
-  while(accept) {
+  if(forceSC & !is.null(manualSCCluster)){
+    sc.object <- subset(object, idents = manualSCCluster)
+    sc.k.param.range <- k.param.range <- x.bounds$k.param
+    if (k.param.range[2] > ncol(sc.object)/2) {sc.k.param.range[2] <- round(ncol(sc.object)/2) }
+    if (sc.k.param.range[2] <= 4) {return(NULL)}
     
-    clusterSilhouettes <- getSilScores(object, npc = n.pcs) #Returns ordered list of seurat clusters from worst to best (as ranked by SI)
-    print(clusterSilhouettes)
-    # This code checks to ensure that only clusters > ~8 cells are submitted for 
-    # sub clustering. 
-    #TODO: Clean up this code
-    check.clusters <- TRUE
-    cl.iter <- 1
-    while(check.clusters) {
-      sc.object <- subset(object, idents = clusterSilhouettes[cl.iter, 1])
-      sc.k.param.range <- k.param.range <- c(2,140)
-      if (k.param.range[2] > ncol(sc.object)/2) {sc.k.param.range[2] <- round(ncol(sc.object)/2) }
-      if (sc.k.param.range[2] <= 4) {cl.iter <- cl.iter + 1} else {check.clusters <- FALSE}
+    x.bounds$k.param <- as.integer(sc.k.param.range)
+    print(x.bounds)
+    
+    if(is.null(n.pcs)) {
+      if(class(object) == "scData"){
+        roots <- object@variation
+      }else if(class(object) == "Seurat"){
+        roots <- object@reductions[["pca"]]@stdev
+      }else if(class(object) == "SingleCellExperiment"){
+        roots <- metadata(object)$roots
+      }
+      n.pcs <- Select.nPC(roots,  do.plot = T) #TODO: Remove file.path argument, also maybe don't show the n.pc vs Max.PC plot unless they ask
     }
-    
-    x.bounds <- list(k.param = as.integer(sc.k.param.range), resolution = c(0.0, 2.0))
     
     set.seed(seed)
     sc.output <- ParBayesianOptimization::bayesOpt(
@@ -195,13 +196,61 @@ subClustR <- function(object,
       acq = acq.func
     )
     
+    print("1")
     sc.object <- bestBayes(sc.object, sc.output, n.pcs = n.pcs)
-    
-    adjust.output <- adjustIdents(object, temp.object = sc.object, n.pcs = n.pcs)
+    print("2")
+    adjust.output <- adjustIdents(object, temp.object = sc.object, n.pcs = n.pcs, checkForImprovement = !forceSC)
     #TODO: I hate storing variable like this. It's probably a sign that I need to create a class and go more object oriented. *shrug* 
     object <- adjust.output$object
-    accept <- adjust.output$accept
-    accept.count <- accept.count + 1
+    print("3")
+    accept.count = NA
+
+  } else {
+  
+    projections <- Embeddings(object = object)[, 1:n.pcs] #projections won't change, so can be stored and re=used
+    initial.clusters <- as.integer(Idents(object))
+    initial.ICVI <- index.S(d = dist(projections, method = "manhattan"), cl = initial.clusters)
+    accept = T
+    accept.count = 0
+    
+    while(accept) {
+      
+      clusterSilhouettes <- getSilScores(object, npc = n.pcs) #Returns ordered list of seurat clusters from worst to best (as ranked by SI)
+      print(clusterSilhouettes)
+      # This code checks to ensure that only clusters > ~8 cells are submitted for 
+      # sub clustering. 
+      #TODO: Clean up this code
+      check.clusters <- TRUE
+      cl.iter <- 1
+      while(check.clusters) {
+        sc.object <- subset(object, idents = clusterSilhouettes[cl.iter, 1])
+        sc.k.param.range <- k.param.range <- x.bounds$k.param #CHANGE DIFF
+        if (k.param.range[2] > ncol(sc.object)/2) {sc.k.param.range[2] <- round(ncol(sc.object)/2) }
+        if (sc.k.param.range[2] <= 4) {cl.iter <- cl.iter + 1} else {check.clusters <- FALSE}
+      }
+      
+      x.bounds <- list(k.param = as.integer(sc.k.param.range), resolution = c(0.0, 2.0))
+      print(x.bounds)
+      
+      set.seed(seed)
+      sc.output <- ParBayesianOptimization::bayesOpt(
+        FUN = function(...){ 
+          ClustR(object = sc.object, n.pcs = n.pcs, ...)
+        },
+        iters.n = n.starts/2, #So this is pretty ad hoc (ad hack lmao), but i think the time it takes to generate these (potentially noisy) GPs isn't worth the benefit they provide beyone like 5 iterations
+        initPoints = n.priors, 
+        bounds = x.bounds,
+        acq = acq.func
+      )
+      
+      sc.object <- bestBayes(sc.object, sc.output, n.pcs = n.pcs)
+      
+      adjust.output <- adjustIdents(object, temp.object = sc.object, n.pcs = n.pcs)
+      #TODO: I hate storing variable like this. It's probably a sign that I need to create a class and go more object oriented. *shrug* 
+      object <- adjust.output$object
+      accept <- adjust.output$accept
+      accept.count <- accept.count + 1
+    }
   }
   
   idents <- as.int.factor(object@active.ident) # as.int.factor should probably be a class function
@@ -210,8 +259,8 @@ subClustR <- function(object,
   return(
     list(
       object = object,
-      initial.eval = initial.eval.Test,
-      final.eval = Test.method(object, method = "autoclustr"),
+      #initial.eval = initial.eval.Test,
+      #final.eval = Test.method(object, method = "autoclustr"),
       accept.count = accept.count
     )
   )
@@ -253,7 +302,7 @@ getICVI <- function(object, npc = NULL) {
 
 as.int.factor <- function(x) {as.integer(levels(x))[x]}
 
-adjustIdents <- function(object, temp.object, n.pcs) {
+adjustIdents <- function(object, temp.object, n.pcs, checkForImprovement = TRUE) {
   embed.dist <- Embeddings(object)[ , 1:n.pcs] %>% dist(method = "manhattan")
   
   new.idents <- as.int.factor(temp.object@active.ident) + 1 + 
@@ -285,15 +334,20 @@ adjustIdents <- function(object, temp.object, n.pcs) {
     # new.SI <- intCriteria(embed.pca, combined.new, crit = "sil")[[1]]
     # index.s.fails <<- index.s.fails + 1
   }
-  if(original.SI > new.SI) {
+  if(original.SI > new.SI & checkForImprovement) {
     print(paste(object@project.name, "REJECTED sub clustering"))
     print(paste("Original:", round(original.SI, 4), "New:", round(new.SI, 4)))
     accept <- FALSE
-  } else if (original.SI <= new.SI) {
+  } else if (original.SI <= new.SI & checkForImprovement) {
     object@active.ident <- as.factor(combined.new)
     print(paste(object@project.name, "ACCEPTED sub clustering"))
     print(paste("Original:", round(original.SI, 4), "New:", round(new.SI, 4)))
     accept <- TRUE
+  } else {
+    object@active.ident <- as.factor(combined.new)
+    print(paste(object@project.name, "FORCED sub clustering"))
+    print(paste("Original:", round(original.SI, 4), "New:", round(new.SI, 4)))
+    accept <- FALSE
   }
   return(list(object=object, accept = accept))
 }

@@ -176,7 +176,7 @@ for (i in 1:10){
 saveRDS(AutoClustR.results.MenonMR, file = "Results/AutoClustR/MenonMR.rds")
 rm(MenonMR, AutoClustR.results.MenonMR)
 
-# Pollen
+# Pollen ----
 Pollen <- Pollen.to.SCexp("Data/Pollen/NBT_hiseq_linear_tpm_values.txt") %>%
   Prep.data()
 AutoClustR.results.Pollen <- list()
@@ -455,3 +455,36 @@ for(algo in names(Ranum.results)) {
   write.csv(Ranum.results[[algo]], file = paste0("Results/Ranum/Ranum_", algo, ".csv" ))
 }
 rm(Ranum)
+
+# Zeisel ----
+Zeisel <- Zeisel.to.SCexp() %>%
+  Prep.data()
+
+Zeisel.results <- res.template
+seeds <- runif(50)
+for(i in 1:3) {
+  Zeisel.results$CellTrails[ i, ] <- CellTrails.flow(data = Zeisel, expr.meas = expr.key$Zeisel)
+  Zeisel.results$CIDR[ i, ] <- CIDR.flow(data = Zeisel, expr.meas = expr.key$Zeisel)
+  Zeisel.results$IKAP[ i, ] <- IKAP.flow(data = Zeisel, expr.meas = expr.key$Zeisel,
+                                        seed = (Sys.time() %>% as.numeric()) * seeds[i])
+  Zeisel.results$RaceID[ i, ] <- RaceID.flow(data = Zeisel, expr.meas = expr.key$Zeisel,
+                                            seed = (Sys.time() %>% as.numeric()) * seeds[i+10])
+  Zeisel.results$SC3[ i, ] <- SC3.flow(data = Zeisel, expr.meas = expr.key$Zeisel,
+                                      seed = (Sys.time() %>% as.numeric()) * seeds[i+20])
+  Zeisel.results$Seurat[ i, ] <- Seurat.flow(data = Zeisel, expr.meas = expr.key$Zeisel,
+                                            seed = (Sys.time() %>% as.numeric()) * seeds[i+30])
+  Zeisel.results$AutoClustR[ i, ] <- AutoClustR.flow(Zeisel, expr.meas = expr.key$Zeisel,
+                                                     Sys.time() %>% as.numeric() * seeds[i+40])
+}
+saveRDS(Zeisel.results, file = "Results/Zeisel/Zeisel.rds")
+for(algo in names(Zeisel.results)) {
+  write.csv(Zeisel.results[[algo]], file = paste0("Results/Zeisel/Zeisel_", algo, ".csv" ))
+}
+
+AutoClustR.results.B1 <- list()
+for (i in 1:10){
+  #Seed has to be integer value
+  seed <- as.numeric( Sys.time() ) * seeds[i] 
+  AutoClustR.results.B1[[i]]  <- AutoClustR.flow(b1, expr.meas = expr.key$Baron, seed = seed)
+  AutoClustR.results.B1[[i]][["seed"]] <- seed
+}
